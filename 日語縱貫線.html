@@ -1,0 +1,3337 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>日語縱貫線</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Layout: a single phone-width column styled as a Japanese railway journey —
+   station name boards (駅名標) for weeks, an LED departure board (発車標) for today's plan,
+   and ink station stamps (駅スタンプ) as badges. Line colors identify the course stage. */
+:root{
+  --bg:#EEF2F1; --surface:#FFFFFF; --surface-2:#F6F8F8; --ink:#17212B; --muted:#5B6873; --line:#D5DDE0;
+  --kana:#0089BE; --n5:#2F9447; --n4:#DD6A10; --exam:#6B4FB0;
+  --ok:#23824F; --ok-bg:#E3F3E9; --bad:#C2303B; --bad-bg:#FBE6E7;
+  --led-bg:#101713; --led:#F3B23A; --led-dim:#5E4A1F; --led-green:#6FE08A;
+  --stamp:#B3263A; --shadow:0 1px 2px rgba(23,33,43,.06),0 4px 14px rgba(23,33,43,.06);
+  --f-jp:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif;
+  --f-zh:"Noto Sans TC","PingFang TC","Microsoft JhengHei","Heiti TC",sans-serif;
+  --f-led:"DotGothic16","Zen Kaku Gothic New",monospace;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0D1215; --surface:#161E23; --surface-2:#1C262C; --ink:#E6ECEE; --muted:#93A2AC; --line:#2A363D;
+  --kana:#35B4E6; --n5:#4CC069; --n4:#F58A35; --exam:#9A80E0;
+  --ok:#4CC979; --ok-bg:#163525; --bad:#F06A73; --bad-bg:#3A1A1E;
+  --led-bg:#070B09; --stamp:#E8596C; --shadow:0 1px 2px rgba(0,0,0,.3);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0D1215; --surface:#161E23; --surface-2:#1C262C; --ink:#E6ECEE; --muted:#93A2AC; --line:#2A363D;
+  --kana:#35B4E6; --n5:#4CC069; --n4:#F58A35; --exam:#9A80E0;
+  --ok:#4CC979; --ok-bg:#163525; --bad:#F06A73; --bad-bg:#3A1A1E;
+  --led-bg:#070B09; --stamp:#E8596C; --shadow:0 1px 2px rgba(0,0,0,.3);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-zh);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.jp{font-family:var(--f-jp)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--kana);outline-offset:2px}
+#app{max-width:600px;margin:0 auto;min-height:100%;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 96px}
+h1,h2,h3{margin:0;text-wrap:balance;line-height:1.3}
+h2{font-size:19px}
+h3{font-size:15px}
+p{margin:0}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spread{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.num{font-variant-numeric:tabular-nums}
+
+/* top bar */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;align-items:center;gap:10px;padding:6px 0 10px}
+.topbar .brand{font-family:var(--f-jp);font-weight:900;font-size:18px;letter-spacing:.04em;display:flex;align-items:center;gap:8px}
+.brand .mark{width:22px;height:22px;border-radius:5px;background:linear-gradient(180deg,var(--n5) 0 33%,var(--n4) 33% 66%,var(--exam) 66%)}
+.topbar .grow{flex:1}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:12.5px;white-space:nowrap}
+.chip .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.chip.ok .dot{background:var(--ok)}
+.chip.warn .dot{background:var(--n4)}
+.iconbtn{background:none;border:0;padding:6px;border-radius:10px;display:inline-flex}
+.iconbtn:hover{background:var(--surface)}
+.back{display:inline-flex;align-items:center;gap:4px;background:none;border:0;padding:6px 4px;color:var(--muted);font-size:14px}
+
+/* cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+.section-title{font-size:12px;letter-spacing:.12em;color:var(--muted);font-weight:700;text-transform:uppercase;margin:6px 2px 0}
+
+/* 駅名標 station board */
+.ekimei{background:var(--surface);border:1px solid var(--line);border-radius:6px;overflow:hidden;box-shadow:var(--shadow);position:relative}
+.ekimei .body{padding:16px 16px 10px;text-align:center;position:relative}
+.ekimei .code{position:absolute;left:14px;top:14px;border:3px solid var(--lc);border-radius:7px;width:48px;text-align:center;line-height:1.05;padding:3px 0;background:var(--surface)}
+.ekimei .code small{display:block;font-size:11px;font-weight:700;color:var(--lc);letter-spacing:.05em}
+.ekimei .code b{display:block;font-size:19px;font-family:var(--f-jp);font-weight:900}
+.ekimei .kanji{font-family:var(--f-jp);font-weight:900;font-size:clamp(34px,10vw,46px);letter-spacing:.12em;line-height:1.15}
+.ekimei .kana{font-family:var(--f-jp);font-weight:500;font-size:15px;letter-spacing:.25em;color:var(--muted)}
+.ekimei .ro{font-size:13px;letter-spacing:.08em;color:var(--muted)}
+.ekimei .stripe{background:var(--lc);color:#fff;display:flex;justify-content:space-between;padding:5px 12px;font-family:var(--f-jp);font-weight:700;font-size:13px}
+.ekimei .stripe span{opacity:.95;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ekimei .sub{border-top:1px solid var(--line);padding:10px 14px;display:flex;justify-content:space-between;gap:10px;font-size:13.5px;align-items:center}
+
+/* LED board */
+.led{background:var(--led-bg);border-radius:10px;padding:12px 12px 8px;color:var(--led);font-family:var(--f-led);box-shadow:inset 0 0 0 2px #222c27, var(--shadow)}
+.led .head{display:flex;justify-content:space-between;font-size:12px;color:var(--led-dim);letter-spacing:.1em;padding:0 4px 6px;border-bottom:1px dashed #2a3530}
+.led .head b{color:var(--led-green);font-weight:400}
+.led-row{display:grid;grid-template-columns:62px 1fr auto;gap:10px;align-items:center;width:100%;text-align:left;background:none;border:0;border-bottom:1px dashed #2a3530;padding:10px 4px;color:var(--led);font-family:var(--f-led);font-size:15px}
+.led-row:last-child{border-bottom:0}
+.led-row .kind{font-size:12px;border:1px solid currentColor;border-radius:3px;text-align:center;padding:1px 0}
+.led-row .what{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.led-row .what small{display:block;font-size:11.5px;color:#a98a4d}
+.led-row .go{font-size:13px;color:var(--led-green)}
+.led-row.done{color:var(--led-dim)}
+.led-row.done .go{color:var(--led-dim)}
+.led-row:hover:not(.done){background:#17211c}
+.led .k-review{color:#7fd3ff}.led .k-lesson{color:var(--led)}.led .k-talk{color:#ff9e9e}.led .k-test{color:#c9b3ff}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.stat b{display:block;font-size:22px;font-family:var(--f-jp);font-weight:900;line-height:1.2}
+.stat span{font-size:12px;color:var(--muted)}
+.bar{height:8px;background:var(--surface-2);border-radius:99px;overflow:hidden;border:1px solid var(--line)}
+.bar i{display:block;height:100%;background:var(--lc,var(--n5));border-radius:99px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;border:1px solid var(--line);background:var(--surface);padding:11px 16px;font-weight:700;font-size:15px;min-height:46px}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.line{background:var(--lc);border-color:var(--lc);color:#fff}
+.btn.block{width:100%}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+
+/* route map */
+.route{position:relative;padding-left:0}
+.stn{display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;background:none;border:0;padding:6px 0;position:relative;min-height:62px}
+.stn .rail{position:relative;height:100%;align-self:stretch;display:flex;justify-content:center}
+.stn .rail::before{content:"";position:absolute;top:0;bottom:0;width:8px;background:var(--lc);left:50%;transform:translateX(-50%)}
+.stn:first-child .rail::before{top:50%}
+.stn:last-child .rail::before{bottom:50%}
+.stn .dot{position:relative;z-index:1;align-self:center;width:24px;height:24px;border-radius:50%;background:var(--surface);border:4px solid var(--lc);display:grid;place-items:center}
+.stn.locked .dot{border-color:var(--line)}
+.stn.locked .rail::before{background:var(--line)}
+.stn.current .dot{width:32px;height:32px;background:var(--lc);box-shadow:0 0 0 5px color-mix(in srgb,var(--lc) 25%,transparent)}
+.stn.passed .dot{background:var(--lc)}
+.stn .info{min-width:0}
+.stn .info .nm{font-family:var(--f-jp);font-weight:900;font-size:17px;letter-spacing:.05em;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.stn .info .nm small{font-family:var(--f-zh);font-weight:500;font-size:12px;color:var(--muted);letter-spacing:0}
+.stn .info .tt{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stn.locked .info{opacity:.55}
+.stn .meta{font-size:12px;color:var(--muted);text-align:right}
+.xfer{margin:4px 0 4px 64px;font-size:12px;font-weight:700;color:var(--muted);display:flex;gap:6px;align-items:center}
+.xfer i{display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--lc)}
+.ministamp{width:34px;height:34px;border-radius:50%;border:2px solid var(--stamp);color:var(--stamp);display:grid;place-items:center;font-family:var(--f-jp);font-weight:900;font-size:11px;transform:rotate(-12deg);line-height:1}
+
+/* lesson list */
+.lesson{display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}
+.lesson .ic{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-family:var(--f-jp);font-weight:900;font-size:17px;background:var(--surface-2);color:var(--lc);border:1px solid var(--line)}
+.lesson.done .ic{background:var(--lc);color:#fff;border-color:var(--lc)}
+.lesson .t{font-weight:700}
+.lesson .d{font-size:12.5px;color:var(--muted)}
+.lesson .st{font-size:12px;color:var(--muted);white-space:nowrap}
+.lesson.done .st{color:var(--ok);font-weight:700}
+
+/* quiz */
+.qwrap{display:flex;flex-direction:column;gap:14px}
+.progress{display:flex;align-items:center;gap:10px}
+.progress .bar{flex:1}
+.prompt{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px 16px;text-align:center;min-height:150px;display:flex;flex-direction:column;justify-content:center;gap:8px;box-shadow:var(--shadow)}
+.prompt .ask{font-size:13px;color:var(--muted)}
+.prompt .big{font-family:var(--f-jp);font-weight:700;font-size:clamp(30px,9vw,44px);line-height:1.25;word-break:break-word}
+.prompt .big.kana-only{font-size:clamp(56px,18vw,84px)}
+.prompt .big.sent{font-size:clamp(19px,5vw,23px);font-weight:500;line-height:1.7;text-align:left}
+.prompt .rd{font-family:var(--f-jp);font-size:16px;color:var(--muted)}
+.prompt .ro{font-size:13px;color:var(--muted);letter-spacing:.04em}
+.prompt .zhbig{font-size:24px;font-weight:700}
+.speak{display:inline-flex;align-items:center;gap:6px;align-self:center;border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:6px 14px;font-size:13px}
+.speak.huge{padding:14px 22px;font-size:15px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opts.one{grid-template-columns:1fr}
+.opt{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:12px 12px;min-height:58px;text-align:left;display:flex;gap:10px;align-items:center;font-size:16px;line-height:1.45;min-width:0}
+.opt .k{flex:none;width:22px;height:22px;border-radius:6px;border:1px solid var(--line);font-size:12px;display:grid;place-items:center;color:var(--muted)}
+.opt .tx{min-width:0;word-break:break-word}
+.opt .tx small{display:block;font-size:12px;color:var(--muted)}
+.opt.jp .tx{font-family:var(--f-jp)}
+.opt:hover:not(:disabled){border-color:var(--ink)}
+.opt.right{border-color:var(--ok);background:var(--ok-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.opt.picked{border-color:var(--ink);background:var(--surface-2)}
+.opt:disabled{cursor:default}
+.feedback{border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.65}
+.feedback.ok{background:var(--ok-bg);color:var(--ok)}
+.feedback.bad{background:var(--bad-bg);color:var(--bad)}
+.feedback .jp{color:var(--ink)}
+.feedback .ex{color:var(--ink);margin-top:4px}
+
+/* learn card */
+.learn{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px 18px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px}
+.learn .head{text-align:center;display:flex;flex-direction:column;gap:4px;align-items:center}
+.learn .glyph{font-family:var(--f-jp);font-weight:700;font-size:clamp(40px,12vw,60px);line-height:1.2}
+.learn .glyph.kana{font-size:96px;line-height:1}
+.learn .glyph.kanji{font-size:96px;font-weight:500;line-height:1.1}
+.learn .rd{font-family:var(--f-jp);font-size:18px;color:var(--muted)}
+.learn .meaning{font-size:20px;font-weight:700}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14.5px;border-top:1px solid var(--line);padding-top:12px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;font-family:var(--f-jp);min-width:0}
+.example{background:var(--surface-2);border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start}
+.example .s{font-family:var(--f-jp);font-size:16.5px;line-height:1.7}
+.example .z{font-size:13.5px;color:var(--muted)}
+.note{background:var(--surface-2);border-left:4px solid var(--lc);border-radius:8px;padding:10px 12px;font-size:14px;line-height:1.7}
+.reveal{background:none;border:1px dashed var(--line);border-radius:8px;padding:2px 10px;font-size:12.5px;color:var(--muted)}
+
+/* convo */
+.chat{display:flex;flex-direction:column;gap:10px}
+.bub{max-width:88%;border-radius:16px;padding:10px 14px;line-height:1.6;position:relative}
+.bub .who{font-size:11.5px;color:var(--muted);margin-bottom:2px}
+.bub .jp{font-size:17px}
+.bub .zh{font-size:13px;color:var(--muted);margin-top:3px}
+.bub .ro{font-size:12px;color:var(--muted)}
+.bub.npc{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px}
+.bub.me{align-self:flex-end;background:var(--lc);color:#fff;border-bottom-right-radius:4px}
+.bub.me .zh,.bub.me .who,.bub.me .ro{color:rgba(255,255,255,.82)}
+.bub .say{position:absolute;right:6px;top:6px}
+.bub.npc{padding-right:40px}
+.scene-head{display:flex;gap:12px;align-items:center}
+.scene-head .badge{flex:none;width:46px;height:46px;border-radius:12px;background:var(--lc);color:#fff;display:grid;place-items:center;font-family:var(--f-jp);font-weight:900;font-size:13px;line-height:1.1;text-align:center}
+
+/* stamps */
+.stamps{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:12px}
+.stamp{aspect-ratio:1;max-width:100%;border-radius:50%;border:3px solid var(--stamp);color:var(--stamp);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-family:var(--f-jp);padding:6px;position:relative}
+.stamp .n{font-weight:900;font-size:17px;letter-spacing:.06em;line-height:1.15}
+.stamp .w{font-size:10.5px;font-weight:700}
+.stamp .dt{font-size:10px;opacity:.85}
+.stamp::before{content:"";position:absolute;inset:4px;border:1px solid currentColor;border-radius:50%;opacity:.6}
+.stamp.empty{border-color:var(--line);color:var(--muted);opacity:.6;border-style:dashed}
+.stamp.empty::before{display:none}
+.stamp.big{width:150px;margin:0 auto}
+.stamp.big .n{font-size:26px}
+.heat{display:grid;grid-template-columns:repeat(14,1fr);gap:3px}
+.heat i{aspect-ratio:1;border-radius:3px;background:var(--surface-2);border:1px solid var(--line)}
+.heat i.l1{background:color-mix(in srgb,var(--n5) 35%,var(--surface))}
+.heat i.l2{background:color-mix(in srgb,var(--n5) 65%,var(--surface))}
+.heat i.l3{background:var(--n5);border-color:var(--n5)}
+
+/* nav */
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+.nav .in{max-width:600px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+.nav button{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0 7px;font-size:11.5px;color:var(--muted);position:relative}
+.nav button svg{width:22px;height:22px}
+.nav button.on{color:var(--ink);font-weight:700}
+.nav button.on::after{content:"";position:absolute;top:0;left:30%;right:30%;height:3px;border-radius:0 0 3px 3px;background:var(--ink)}
+.nav .badge{position:absolute;top:4px;left:calc(50% + 6px);background:var(--bad);color:#fff;border-radius:99px;font-size:10px;padding:0 5px;line-height:16px;min-width:16px;text-align:center}
+
+/* misc */
+.list{display:flex;flex-direction:column;gap:8px}
+.dict-item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+.dict-item .a{font-family:var(--f-jp);font-size:17px;font-weight:700}
+.dict-item .b{font-size:13px;color:var(--muted)}
+.lvl{font-size:11px;border-radius:5px;padding:1px 6px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.lvl.m{border-color:var(--ok);color:var(--ok)}
+.seg{display:flex;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px;flex-wrap:wrap}
+.seg button{flex:1;border:0;background:none;border-radius:8px;padding:6px 8px;font-size:13px;color:var(--muted);white-space:nowrap}
+.seg button.on{background:var(--surface);color:var(--ink);font-weight:700;box-shadow:var(--shadow)}
+input[type=search],input[type=date]{width:100%;font:inherit;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.setting{display:flex;flex-direction:column;gap:6px;padding:12px 0;border-bottom:1px solid var(--line)}
+.setting:last-child{border-bottom:0}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:14px;z-index:20;max-width:calc(100% - 32px);text-align:center;box-shadow:var(--shadow)}
+.result-big{font-family:var(--f-jp);font-weight:900;font-size:54px;line-height:1}
+.scoreline{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:14.5px}
+.confirm{border:1.5px solid var(--bad);border-radius:12px;padding:12px;background:var(--bad-bg)}
+.timer{font-family:var(--f-led);font-size:15px}
+.tag{display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:5px;background:var(--lc);color:#fff}
+.levelname{font-family:var(--f-jp);font-weight:900}
+@media (max-width:380px){.opts{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+@media (prefers-reduced-motion:no-preference){
+  .stn.current .dot{animation:pulse 2.4s ease-in-out infinite}
+  @keyframes pulse{50%{box-shadow:0 0 0 9px color-mix(in srgb,var(--lc) 12%,transparent)}}
+  .pop{animation:pop .35s ease-out}
+  @keyframes pop{from{transform:scale(.6) rotate(-30deg);opacity:0}to{transform:scale(1) rotate(-12deg);opacity:1}}
+}
+</style>
+<div id="app" aria-live="polite"></div>
+<nav class="nav" id="nav"></nav>
+<script>
+// 單字：每行「單字;讀音;中文」，單字本身是假名時讀音留空
+const VOCAB_RAW = {
+1: `
+おはよう ございます;;早安
+こんにちは;;你好（白天）
+こんばんは;;晚上好
+さようなら;;再見
+おやすみなさい;;晚安
+ありがとう ございます;;謝謝
+すみません;;不好意思、對不起、借過
+はい;;是、好
+いいえ;;不是、不會
+はじめまして;;初次見面
+よろしく おねがいします;;請多指教、麻煩你了
+いただきます;;開動了
+ごちそうさまでした;;我吃飽了、謝謝招待
+いってきます;;我出門了
+いってらっしゃい;;路上小心
+ただいま;;我回來了
+おかえりなさい;;歡迎回來
+おげんきですか;;你好嗎？
+`,
+2: `
+ゼロ;;零
+いち;;一
+に;;二
+さん;;三
+よん;;四
+ご;;五
+ろく;;六
+なな;;七
+はち;;八
+きゅう;;九
+じゅう;;十
+ぜんぶで いくらですか;;全部多少錢？
+これを ください;;請給我這個
+だいじょうぶです;;沒問題、不用了
+ちょっと まって ください;;請等一下
+わかりません;;我不懂
+もう いちど おねがいします;;請再說一次
+ゆっくり おねがいします;;請說慢一點
+`,
+3: `
+コーヒー;;咖啡
+ホテル;;飯店
+トイレ;;廁所
+レストラン;;餐廳
+タクシー;;計程車
+バス;;公車
+コンビニ;;便利商店
+カード;;卡片、信用卡
+メニュー;;菜單
+テレビ;;電視
+パン;;麵包
+ビール;;啤酒
+ジュース;;果汁
+カメラ;;相機
+ペン;;筆
+ノート;;筆記本
+ドア;;門
+エレベーター;;電梯
+スマホ;;智慧型手機
+ワイファイ;;Wi-Fi 無線網路
+パスポート;;護照
+チケット;;票、入場券
+ラーメン;;拉麵
+ケーキ;;蛋糕
+デパート;;百貨公司
+スーパー;;超市
+アメリカ;;美國
+トイレは どこですか;;廁所在哪裡？
+えいごの メニューは ありますか;;有英文菜單嗎？
+カードで いいですか;;可以刷卡嗎？
+`,
+4: `
+私;わたし;我
+あなた;;你
+彼;かれ;他、男朋友
+彼女;かのじょ;她、女朋友
+私たち;わたしたち;我們
+人;ひと;人
+男;おとこ;男人
+女;おんな;女人
+男の子;おとこのこ;男孩
+女の子;おんなのこ;女孩
+子供;こども;小孩
+大人;おとな;大人
+友達;ともだち;朋友
+先生;せんせい;老師
+学生;がくせい;學生
+留学生;りゅうがくせい;留學生
+医者;いしゃ;醫生
+名前;なまえ;名字
+国;くに;國家
+日本;にほん;日本
+日本人;にほんじん;日本人
+台湾;たいわん;台灣
+中国;ちゅうごく;中國
+韓国;かんこく;韓國
+日本語;にほんご;日語
+英語;えいご;英語
+家族;かぞく;家人
+父;ちち;（我的）父親
+母;はは;（我的）母親
+お父さん;おとうさん;父親（稱呼他人或自己的）
+お母さん;おかあさん;母親（稱呼）
+兄;あに;（我的）哥哥
+姉;あね;（我的）姊姊
+弟;おとうと;弟弟
+妹;いもうと;妹妹
+お兄さん;おにいさん;哥哥（稱呼）
+お姉さん;おねえさん;姊姊（稱呼）
+兄弟;きょうだい;兄弟姊妹
+これ;;這個
+それ;;那個（靠近對方）
+あれ;;那個（遠處）
+どれ;;哪個
+この;;這～
+その;;那～
+あの;;那～（遠處）
+どの;;哪～
+ここ;;這裡
+そこ;;那裡
+あそこ;;那邊（遠處）
+どこ;;哪裡
+だれ;;誰
+どなた;;哪位（禮貌）
+何;なに;什麼
+そうです;;是的、沒錯
+〜さん;;～先生、～小姐
+〜歳;〜さい;～歲
+いくつ;;幾個、幾歲
+仕事;しごと;工作
+会社;かいしゃ;公司
+大学;だいがく;大學
+学校;がっこう;學校
+みんな;;大家
+一人;ひとり;一個人
+二人;ふたり;兩個人
+〜人;〜にん;～人（人數）
+本;ほん;書
+辞書;じしょ;字典
+新聞;しんぶん;報紙
+雑誌;ざっし;雜誌
+傘;かさ;雨傘
+鞄;かばん;包包
+時計;とけい;時鐘、手錶
+鍵;かぎ;鑰匙
+財布;さいふ;錢包
+携帯電話;けいたいでんわ;手機
+電話;でんわ;電話
+写真;しゃしん;照片
+鉛筆;えんぴつ;鉛筆
+机;つくえ;書桌
+椅子;いす;椅子
+`,
+5: `
+一つ;ひとつ;一個
+二つ;ふたつ;兩個
+三つ;みっつ;三個
+四つ;よっつ;四個
+五つ;いつつ;五個
+六つ;むっつ;六個
+七つ;ななつ;七個
+八つ;やっつ;八個
+九つ;ここのつ;九個
+十;とお;十個
+百;ひゃく;一百
+千;せん;一千
+万;まん;一萬
+円;えん;日圓
+〜時;〜じ;～點（時刻）
+〜分;〜ふん;～分（時刻、分鐘）
+半;はん;半（～點半）
+今;いま;現在
+何時;なんじ;幾點
+時間;じかん;時間、～小時
+午前;ごぜん;上午
+午後;ごご;下午
+朝;あさ;早上
+昼;ひる;中午、白天
+晩;ばん;晚上
+夜;よる;夜晚
+今日;きょう;今天
+明日;あした;明天
+昨日;きのう;昨天
+毎日;まいにち;每天
+毎朝;まいあさ;每天早上
+毎晩;まいばん;每天晚上
+今週;こんしゅう;這週
+来週;らいしゅう;下週
+先週;せんしゅう;上週
+今月;こんげつ;這個月
+来月;らいげつ;下個月
+先月;せんげつ;上個月
+今年;ことし;今年
+来年;らいねん;明年
+去年;きょねん;去年
+毎年;まいとし;每年
+日曜日;にちようび;星期日
+月曜日;げつようび;星期一
+火曜日;かようび;星期二
+水曜日;すいようび;星期三
+木曜日;もくようび;星期四
+金曜日;きんようび;星期五
+土曜日;どようび;星期六
+何曜日;なんようび;星期幾
+一日;ついたち;（每月）1號
+二日;ふつか;2號、兩天
+三日;みっか;3號、三天
+四日;よっか;4號
+五日;いつか;5號
+六日;むいか;6號
+七日;なのか;7號
+八日;ようか;8號
+九日;ここのか;9號
+十日;とおか;10號
+二十日;はつか;20號
+〜月;〜がつ;～月
+誕生日;たんじょうび;生日
+休み;やすみ;休假、休息
+いつ;;什麼時候
+週末;しゅうまつ;週末
+春;はる;春天
+夏;なつ;夏天
+秋;あき;秋天
+冬;ふゆ;冬天
+起きる;おきる;起床
+寝る;ねる;睡覺
+働く;はたらく;工作
+休む;やすむ;休息、請假
+勉強する;べんきょうする;學習、讀書
+始まる;はじまる;開始（自動詞）
+終わる;おわる;結束
+`,
+6: `
+食べる;たべる;吃
+飲む;のむ;喝
+買う;かう;買
+ご飯;ごはん;飯、餐
+朝ご飯;あさごはん;早餐
+昼ご飯;ひるごはん;午餐
+晩ご飯;ばんごはん;晚餐
+肉;にく;肉
+牛肉;ぎゅうにく;牛肉
+豚肉;ぶたにく;豬肉
+鶏肉;とりにく;雞肉
+魚;さかな;魚
+野菜;やさい;蔬菜
+果物;くだもの;水果
+りんご;;蘋果
+みかん;;橘子
+卵;たまご;蛋
+水;みず;水
+お茶;おちゃ;茶
+牛乳;ぎゅうにゅう;牛奶
+お酒;おさけ;酒
+料理;りょうり;料理、菜餚
+お菓子;おかし;點心、零食
+砂糖;さとう;糖
+塩;しお;鹽
+醤油;しょうゆ;醬油
+おいしい;;好吃
+まずい;;難吃
+甘い;あまい;甜的
+辛い;からい;辣的
+熱い;あつい;燙的
+冷たい;つめたい;冰的、冷的
+お腹;おなか;肚子
+お腹が空く;おなかがすく;肚子餓
+喉が渇く;のどがかわく;口渴
+店;みせ;店
+食堂;しょくどう;食堂
+喫茶店;きっさてん;咖啡廳
+八百屋;やおや;蔬果店
+お金;おかね;錢
+いくら;;多少錢
+高い;たかい;貴的、高的
+安い;やすい;便宜的
+〜個;〜こ;～個
+〜枚;〜まい;～張、～件（薄平的東西）
+〜本;〜ほん;～瓶、～支（細長的東西）
+〜杯;〜はい;～杯、～碗
+〜冊;〜さつ;～本（書）
+ください;;請給我
+箸;はし;筷子
+皿;さら;盤子
+茶碗;ちゃわん;碗
+コップ;;杯子
+弁当;べんとう;便當
+物;もの;東西
+服;ふく;衣服
+シャツ;;襯衫
+ズボン;;褲子
+靴;くつ;鞋子
+靴下;くつした;襪子
+帽子;ぼうし;帽子
+眼鏡;めがね;眼鏡
+着る;きる;穿（上衣）
+はく;;穿（褲子、鞋子）
+かぶる;;戴（帽子）
+かける;;戴（眼鏡）、掛
+脱ぐ;ぬぐ;脫
+大きい;おおきい;大的
+小さい;ちいさい;小的
+新しい;あたらしい;新的
+古い;ふるい;舊的
+同じ;おなじ;相同的
+`,
+7: `
+駅;えき;車站
+電車;でんしゃ;電車
+地下鉄;ちかてつ;地下鐵
+車;くるま;汽車
+自転車;じてんしゃ;腳踏車
+飛行機;ひこうき;飛機
+船;ふね;船
+空港;くうこう;機場
+切符;きっぷ;車票
+乗る;のる;搭乘
+降りる;おりる;下（車）
+乗り換える;のりかえる;轉乘
+歩く;あるく;走路
+行く;いく;去
+来る;くる;來
+帰る;かえる;回去、回家
+着く;つく;到達
+道;みち;路
+橋;はし;橋
+角;かど;轉角
+交差点;こうさてん;十字路口
+信号;しんごう;紅綠燈
+右;みぎ;右
+左;ひだり;左
+前;まえ;前面、之前
+後ろ;うしろ;後面
+上;うえ;上面
+下;した;下面
+中;なか;裡面
+外;そと;外面
+隣;となり;隔壁、旁邊
+横;よこ;旁邊、橫向
+近く;ちかく;附近
+間;あいだ;之間
+東;ひがし;東
+西;にし;西
+南;みなみ;南
+北;きた;北
+近い;ちかい;近的
+遠い;とおい;遠的
+まっすぐ;;直直地
+曲がる;まがる;轉彎
+渡る;わたる;過（馬路、橋）
+入口;いりぐち;入口
+出口;でぐち;出口
+部屋;へや;房間
+家;いえ;家、房子
+うち;;家、自己家
+建物;たてもの;建築物
+病院;びょういん;醫院
+銀行;ぎんこう;銀行
+郵便局;ゆうびんきょく;郵局
+図書館;としょかん;圖書館
+公園;こうえん;公園
+大使館;たいしかん;大使館
+交番;こうばん;派出所
+映画館;えいがかん;電影院
+お寺;おてら;寺廟
+神社;じんじゃ;神社
+町;まち;城鎮、街
+村;むら;村莊
+山;やま;山
+川;かわ;河
+海;うみ;海
+池;いけ;池塘
+所;ところ;地方
+地図;ちず;地圖
+旅行;りょこう;旅行
+散歩;さんぽ;散步
+`,
+8: `
+会う;あう;見面
+話す;はなす;說話
+言う;いう;說
+聞く;きく;聽、問
+見る;みる;看
+見せる;みせる;給～看
+読む;よむ;讀
+書く;かく;寫
+分かる;わかる;懂、知道
+知る;しる;知道、認識
+教える;おしえる;教、告訴
+習う;ならう;（向人）學習
+覚える;おぼえる;記住、學會
+忘れる;わすれる;忘記
+答える;こたえる;回答
+使う;つかう;使用
+作る;つくる;製作
+洗う;あらう;洗
+掃除する;そうじする;打掃
+洗濯する;せんたくする;洗衣服
+待つ;まつ;等
+持つ;もつ;拿、帶著
+置く;おく;放置
+取る;とる;拿、取
+撮る;とる;拍（照）
+渡す;わたす;交給
+貸す;かす;借出
+借りる;かりる;借入
+返す;かえす;歸還
+あげる;;給（別人）
+もらう;;得到、收到
+くれる;;（別人）給我
+送る;おくる;寄送、送（人）
+出す;だす;拿出、寄出、交出
+入れる;いれる;放入
+開ける;あける;打開
+閉める;しめる;關上
+つける;;開（電燈、電器）
+消す;けす;關掉、擦掉
+押す;おす;按、推
+引く;ひく;拉
+立つ;たつ;站
+座る;すわる;坐
+入る;はいる;進入
+出る;でる;出去、出來
+出かける;でかける;外出
+遊ぶ;あそぶ;玩
+泳ぐ;およぐ;游泳
+走る;はしる;跑
+飛ぶ;とぶ;飛
+歌う;うたう;唱歌
+弾く;ひく;彈奏（樂器）
+浴びる;あびる;淋（浴）
+住む;すむ;居住
+売る;うる;賣
+呼ぶ;よぶ;叫、呼喚
+死ぬ;しぬ;死
+生まれる;うまれる;出生
+結婚する;けっこんする;結婚
+並ぶ;ならぶ;排隊、排列
+困る;こまる;困擾、傷腦筋
+頑張る;がんばる;加油、努力
+疲れる;つかれる;累
+降る;ふる;下（雨、雪）
+吹く;ふく;（風）吹
+咲く;さく;（花）開
+磨く;みがく;刷（牙）、擦亮
+`,
+9: `
+いい;;好的
+悪い;わるい;壞的、不好的
+暑い;あつい;（天氣）熱
+寒い;さむい;（天氣）冷
+暖かい;あたたかい;溫暖
+涼しい;すずしい;涼爽
+多い;おおい;多
+少ない;すくない;少
+長い;ながい;長
+短い;みじかい;短
+広い;ひろい;寬廣
+狭い;せまい;狹窄
+重い;おもい;重
+軽い;かるい;輕
+早い;はやい;（時間）早
+速い;はやい;（速度）快
+遅い;おそい;慢、晚
+明るい;あかるい;明亮
+暗い;くらい;暗
+強い;つよい;強
+弱い;よわい;弱
+太い;ふとい;粗、胖
+細い;ほそい;細
+易しい;やさしい;容易、簡單
+難しい;むずかしい;難
+優しい;やさしい;溫柔
+面白い;おもしろい;有趣
+つまらない;;無聊
+楽しい;たのしい;快樂、好玩
+忙しい;いそがしい;忙
+痛い;いたい;痛
+若い;わかい;年輕
+可愛い;かわいい;可愛
+汚い;きたない;髒
+危ない;あぶない;危險
+うるさい;;吵
+低い;ひくい;低、矮
+白い;しろい;白色的
+黒い;くろい;黑色的
+赤い;あかい;紅色的
+青い;あおい;藍色的
+黄色い;きいろい;黃色的
+茶色;ちゃいろ;咖啡色
+色;いろ;顏色
+きれい;;漂亮、乾淨
+静か;しずか;安靜
+にぎやか;;熱鬧
+有名;ゆうめい;有名
+親切;しんせつ;親切
+元気;げんき;有精神、健康
+暇;ひま;有空、閒
+大丈夫;だいじょうぶ;沒問題、不要緊
+好き;すき;喜歡
+嫌い;きらい;討厭
+上手;じょうず;擅長、厲害
+下手;へた;不擅長
+大好き;だいすき;非常喜歡
+大切;たいせつ;重要、珍惜
+便利;べんり;方便
+いろいろ;;各式各樣
+簡単;かんたん;簡單
+天気;てんき;天氣
+雨;あめ;雨
+雪;ゆき;雪
+風;かぜ;風
+空;そら;天空
+晴れ;はれ;晴天
+曇り;くもり;陰天
+花;はな;花
+木;き;樹
+犬;いぬ;狗
+猫;ねこ;貓
+鳥;とり;鳥
+動物;どうぶつ;動物
+`,
+10: `
+教室;きょうしつ;教室
+授業;じゅぎょう;課、上課
+宿題;しゅくだい;作業
+試験;しけん;考試
+テスト;;測驗
+問題;もんだい;問題、題目
+質問;しつもん;提問
+答え;こたえ;答案
+意味;いみ;意思
+言葉;ことば;語言、詞語
+漢字;かんじ;漢字
+ひらがな;;平假名
+カタカナ;;片假名
+作文;さくぶん;作文
+練習;れんしゅう;練習
+夏休み;なつやすみ;暑假
+クラス;;班級
+黒板;こくばん;黑板
+紙;かみ;紙
+頭;あたま;頭
+顔;かお;臉
+目;め;眼睛
+耳;みみ;耳朵
+鼻;はな;鼻子
+口;くち;嘴
+歯;は;牙齒
+手;て;手
+足;あし;腳
+体;からだ;身體
+背;せ;身高、背
+声;こえ;聲音（人或動物）
+病気;びょうき;生病
+風邪;かぜ;感冒
+薬;くすり;藥
+お風呂;おふろ;浴缸、洗澡
+シャワー;;淋浴
+台所;だいどころ;廚房
+窓;まど;窗戶
+壁;かべ;牆
+階段;かいだん;樓梯
+〜階;〜かい;～樓
+庭;にわ;院子
+冷蔵庫;れいぞうこ;冰箱
+電気;でんき;電、電燈
+ベッド;;床
+布団;ふとん;被褥
+棚;たな;架子
+箱;はこ;箱子
+手紙;てがみ;信
+切手;きって;郵票
+はがき;;明信片
+封筒;ふうとう;信封
+荷物;にもつ;行李、包裹
+パソコン;;電腦
+音楽;おんがく;音樂
+歌;うた;歌
+映画;えいが;電影
+絵;え;畫
+趣味;しゅみ;興趣、嗜好
+スポーツ;;運動
+サッカー;;足球
+野球;やきゅう;棒球
+ゲーム;;遊戲
+`,
+11: `
+とても;;非常
+少し;すこし;一點
+ちょっと;;一下、有點
+たくさん;;很多
+全部;ぜんぶ;全部
+もう;;已經、再
+まだ;;還、尚未
+よく;;常常、充分地
+時々;ときどき;有時
+いつも;;總是
+たいてい;;大多、通常
+すぐ;;馬上
+ゆっくり;;慢慢地
+一緒に;いっしょに;一起
+一番;いちばん;最、第一
+また;;又、再
+もっと;;更
+あまり;;不太（＋否定）
+全然;ぜんぜん;完全不（＋否定）
+本当に;ほんとうに;真的
+たぶん;;大概
+初めて;はじめて;第一次
+最初;さいしょ;最初
+最後;さいご;最後
+次;つぎ;下一個
+後で;あとで;待會、之後
+そして;;然後
+それから;;之後、接著
+でも;;但是
+だから;;所以
+じゃあ;;那麼
+どう;;怎麼樣
+どうして;;為什麼
+なぜ;;為什麼
+どんな;;什麼樣的
+どのくらい;;多久、多少
+どちら;;哪邊、哪一個
+こちら;;這邊、這位
+そちら;;那邊、您那邊
+あちら;;那邊（遠處）
+こんな;;這樣的
+そんな;;那樣的
+あんな;;那樣的（遠）
+こう;;這樣
+そう;;那樣
+ごめんなさい;;對不起
+どうぞ;;請
+どうも;;謝謝、非常
+お願いします;おねがいします;拜託、麻煩了
+いらっしゃいませ;;歡迎光臨
+失礼します;しつれいします;打擾了、失陪了
+もしもし;;喂（電話）
+ええ;;是、嗯
+ほか;;其他
+半分;はんぶん;一半
+〜ぐらい;;大約
+〜だけ;;只有
+〜ずつ;;各～、每～
+〜目;〜め;第～
+〜回;〜かい;～次
+〜番;〜ばん;～號
+番号;ばんごう;號碼
+ニュース;;新聞（報導）
+話;はなし;話、故事
+用事;ようじ;要辦的事
+約束;やくそく;約定
+世界;せかい;世界
+外国;がいこく;外國
+外国人;がいこくじん;外國人
+`,
+12: `
+引っ越す;ひっこす;搬家
+アパート;;公寓
+マンション;;大廈公寓
+家賃;やちん;房租
+大家;おおや;房東
+不動産屋;ふどうさんや;房屋仲介
+住所;じゅうしょ;地址
+近所;きんじょ;附近、鄰居
+押し入れ;おしいれ;壁櫥
+玄関;げんかん;玄關
+屋上;おくじょう;屋頂（平台）
+屋根;やね;屋頂
+床;ゆか;地板
+畳;たたみ;榻榻米
+カーテン;;窗簾
+暖房;だんぼう;暖氣
+冷房;れいぼう;冷氣
+ガス;;瓦斯
+水道;すいどう;自來水
+電気代;でんきだい;電費
+ゴミ;;垃圾
+燃えるゴミ;もえるゴミ;可燃垃圾
+捨てる;すてる;丟棄
+片付ける;かたづける;收拾、整理
+飾る;かざる;裝飾
+壊れる;こわれる;壞掉
+壊す;こわす;弄壞
+直す;なおす;修理、改正
+直る;なおる;修好
+汚れる;よごれる;弄髒
+鏡;かがみ;鏡子
+石鹸;せっけん;肥皂
+タオル;;毛巾
+道具;どうぐ;工具
+機械;きかい;機器
+エアコン;;空調
+留守;るす;不在家
+生活;せいかつ;生活
+習慣;しゅうかん;習慣
+規則;きそく;規則
+準備;じゅんび;準備
+用意;ようい;準備、預備
+引き出し;ひきだし;抽屜
+家具;かぐ;家具
+寝坊する;ねぼうする;睡過頭
+沸かす;わかす;燒開（水）
+沸く;わく;（水）沸騰
+`,
+13: `
+明後日;あさって;後天
+一昨日;おととい;前天
+毎週;まいしゅう;每週
+毎月;まいつき;每月
+夕方;ゆうがた;傍晚
+真夜中;まよなか;半夜
+しばらく;;暫時、一陣子
+最近;さいきん;最近
+将来;しょうらい;將來
+昔;むかし;以前、從前
+この間;このあいだ;前幾天
+今度;こんど;這次、下次
+今夜;こんや;今晚
+今朝;けさ;今天早上
+夕べ;ゆうべ;昨晚
+途中;とちゅう;途中
+間に合う;まにあう;來得及
+遅れる;おくれる;遲到、晚
+急ぐ;いそぐ;趕快
+両親;りょうしん;父母
+夫;おっと;（我的）丈夫
+妻;つま;（我的）妻子
+祖父;そふ;祖父
+祖母;そぼ;祖母
+息子;むすこ;兒子
+娘;むすめ;女兒
+親戚;しんせき;親戚
+主人;しゅじん;丈夫、主人
+家内;かない;（我的）妻子
+夫婦;ふうふ;夫婦
+赤ちゃん;あかちゃん;嬰兒
+親;おや;父母、雙親
+恋人;こいびと;戀人
+知り合い;しりあい;認識的人
+挨拶;あいさつ;打招呼
+紹介する;しょうかいする;介紹
+招待する;しょうたいする;邀請、招待
+訪ねる;たずねる;拜訪
+付き合う;つきあう;交往、陪伴
+育てる;そだてる;養育
+世話;せわ;照顧
+お祝い;おいわい;祝賀、賀禮
+お見舞い;おみまい;探病
+お土産;おみやげ;伴手禮
+お礼;おれい;道謝、謝禮
+`,
+14: `
+朝食;ちょうしょく;早餐
+昼食;ちゅうしょく;午餐
+夕食;ゆうしょく;晚餐
+食欲;しょくよく;食慾
+味;あじ;味道
+酸っぱい;すっぱい;酸的
+苦い;にがい;苦的
+塩辛い;しおからい;鹹的
+食べ物;たべもの;食物
+飲み物;のみもの;飲料
+油;あぶら;油
+スープ;;湯
+米;こめ;米
+材料;ざいりょう;材料
+焼く;やく;烤、煎
+煮る;にる;煮、燉
+炒める;いためる;炒
+切る;きる;切
+混ぜる;まぜる;混合、攪拌
+包む;つつむ;包
+温める;あたためる;加熱
+冷える;ひえる;變冷
+冷やす;ひやす;冰鎮
+足りる;たりる;足夠
+残る;のこる;剩下
+残す;のこす;留下、吃剩
+予約;よやく;預約
+注文する;ちゅうもんする;點餐、訂購
+会計;かいけい;結帳
+おかわり;;再來一份
+食事;しょくじ;用餐
+外食;がいしょく;外食
+ごちそう;;大餐、款待
+味噌汁;みそしる;味噌湯
+お寿司;おすし;壽司
+アイスクリーム;;冰淇淋
+禁煙;きんえん;禁菸
+空く;すく;（肚子）餓、（人）少
+込む;こむ;擁擠
+グラス;;玻璃杯
+ナイフ;;刀
+フォーク;;叉子
+スプーン;;湯匙
+`,
+15: `
+喉;のど;喉嚨
+熱;ねつ;發燒、熱度
+気持ち;きもち;心情、感覺
+咳;せき;咳嗽
+体重;たいじゅう;體重
+怪我;けが;受傷
+骨;ほね;骨頭
+血;ち;血
+腕;うで;手臂
+指;ゆび;手指
+首;くび;脖子
+肩;かた;肩膀
+胸;むね;胸
+背中;せなか;背部
+髪;かみ;頭髮
+毛;け;毛
+心;こころ;心
+具合;ぐあい;（身體）狀況
+調子;ちょうし;狀態
+気分;きぶん;心情、身體感覺
+治る;なおる;痊癒
+入院する;にゅういんする;住院
+退院する;たいいんする;出院
+看護師;かんごし;護理師
+注射;ちゅうしゃ;打針
+保険証;ほけんしょう;健保卡
+保険;ほけん;保險
+診察;しんさつ;看診
+受付;うけつけ;櫃台、掛號處
+痛む;いたむ;疼痛
+倒れる;たおれる;倒下
+太る;ふとる;變胖
+痩せる;やせる;變瘦
+運動;うんどう;運動
+健康;けんこう;健康
+眠い;ねむい;睏
+眠る;ねむる;睡著
+汗;あせ;汗
+吐く;はく;吐
+折れる;おれる;折斷
+火傷;やけど;燙傷
+救急車;きゅうきゅうしゃ;救護車
+アレルギー;;過敏
+歯医者;はいしゃ;牙醫
+薬局;やっきょく;藥局
+`,
+16: `
+先輩;せんぱい;前輩、學長姐
+後輩;こうはい;後輩、學弟妹
+卒業;そつぎょう;畢業
+入学;にゅうがく;入學
+成績;せいせき;成績
+講義;こうぎ;（大學）講課
+研究;けんきゅう;研究
+専門;せんもん;專業、主修
+教育;きょういく;教育
+留学;りゅうがく;留學
+受ける;うける;接受、參加（考試）
+合格;ごうかく;合格、考上
+落ちる;おちる;掉落、落榜
+復習;ふくしゅう;複習
+予習;よしゅう;預習
+説明;せつめい;說明
+意見;いけん;意見
+間違える;まちがえる;弄錯
+間違い;まちがい;錯誤
+点;てん;分數、點
+科学;かがく;科學
+数学;すうがく;數學
+歴史;れきし;歷史
+文学;ぶんがく;文學
+経済;けいざい;經濟
+法律;ほうりつ;法律
+小学校;しょうがっこう;小學
+中学校;ちゅうがっこう;國中
+高校;こうこう;高中
+大学生;だいがくせい;大學生
+校長;こうちょう;校長
+生徒;せいと;（中小學）學生
+教科書;きょうかしょ;課本
+レポート;;報告
+締め切り;しめきり;截止日期
+出席;しゅっせき;出席
+欠席;けっせき;缺席
+遅刻;ちこく;遲到
+サークル;;社團
+奨学金;しょうがくきん;獎學金
+寮;りょう;宿舍
+調べる;しらべる;查、調查
+比べる;くらべる;比較
+考える;かんがえる;思考
+`,
+17: `
+会議;かいぎ;會議
+出張;しゅっちょう;出差
+残業;ざんぎょう;加班
+給料;きゅうりょう;薪水
+上司;じょうし;上司
+部下;ぶか;部下
+社長;しゃちょう;社長、總經理
+部長;ぶちょう;部長、經理
+課長;かちょう;課長
+会社員;かいしゃいん;公司職員
+アルバイト;;打工
+面接;めんせつ;面試
+履歴書;りれきしょ;履歷表
+経験;けいけん;經驗
+勤める;つとめる;任職
+お客さん;おきゃくさん;客人
+店員;てんいん;店員
+係;かかり;負責人
+計画;けいかく;計畫
+予定;よてい;預定、行程
+連絡する;れんらくする;聯絡
+相談する;そうだんする;商量
+報告;ほうこく;報告
+確認;かくにん;確認
+事務所;じむしょ;辦公室
+工場;こうじょう;工廠
+産業;さんぎょう;產業
+貿易;ぼうえき;貿易
+運転手;うんてんしゅ;司機
+警官;けいかん;警察
+公務員;こうむいん;公務員
+辞める;やめる;辭職、放棄
+決める;きめる;決定
+決まる;きまる;被決定、定下來
+手伝う;てつだう;幫忙
+頼む;たのむ;拜託、點（菜）
+断る;ことわる;拒絕
+慣れる;なれる;習慣
+続ける;つづける;繼續
+`,
+18: `
+バス停;バスてい;公車站
+近道;ちかみち;捷徑
+混雑;こんざつ;擁擠
+渋滞;じゅうたい;塞車
+到着;とうちゃく;到達
+出発;しゅっぱつ;出發
+運転;うんてん;駕駛
+乗り物;のりもの;交通工具
+新幹線;しんかんせん;新幹線
+特急;とっきゅう;特急列車
+急行;きゅうこう;快車
+普通;ふつう;普通、普通車
+終電;しゅうでん;末班電車
+始発;しはつ;首班車
+片道;かたみち;單程
+往復;おうふく;來回
+指定席;していせき;對號座
+自由席;じゆうせき;自由座
+ホーム;;月台
+改札口;かいさつぐち;剪票口
+〜線;〜せん;～線（路線）
+〜行き;〜ゆき;開往～
+〜番線;〜ばんせん;第～月台
+地下;ちか;地下
+駐車場;ちゅうしゃじょう;停車場
+道路;どうろ;道路
+通り;とおり;大街、馬路
+通る;とおる;通過
+戻る;もどる;返回
+迎える;むかえる;迎接
+見送る;みおくる;送行
+案内;あんない;嚮導、引導
+観光;かんこう;觀光
+景色;けしき;景色
+旅館;りょかん;日式旅館
+泊まる;とまる;住宿
+温泉;おんせん;溫泉
+島;しま;島
+港;みなと;港口
+スーツケース;;行李箱
+迷う;まよう;迷路、猶豫
+`,
+19: `
+買い物;かいもの;購物
+品物;しなもの;商品
+値段;ねだん;價格
+セール;;特價
+割引;わりびき;折扣
+おつり;;找零
+レシート;;收據（小票）
+領収書;りょうしゅうしょ;收據（正式）
+レジ;;收銀台
+袋;ふくろ;袋子
+現金;げんきん;現金
+払う;はらう;付錢
+両替;りょうがえ;換錢
+貯金;ちょきん;存款
+口座;こうざ;帳戶
+引き出す;ひきだす;提領
+税金;ぜいきん;稅金
+無料;むりょう;免費
+料金;りょうきん;費用
+売り場;うりば;賣場
+試着する;しちゃくする;試穿
+似合う;にあう;適合、好看
+サイズ;;尺寸
+選ぶ;えらぶ;選擇
+探す;さがす;尋找
+見つける;みつける;找到
+見つかる;みつかる;被找到
+落とす;おとす;弄掉、遺失
+拾う;ひろう;撿
+届ける;とどける;送到、送交
+届く;とどく;送達
+役所;やくしょ;政府機關
+区役所;くやくしょ;區公所
+市役所;しやくしょ;市公所
+手続き;てつづき;手續
+書類;しょるい;文件
+申し込む;もうしこむ;申請、報名
+申込書;もうしこみしょ;申請表
+印鑑;いんかん;印章
+サイン;;簽名
+在留カード;ざいりゅうカード;在留卡
+小包;こづつみ;包裹
+`,
+20: `
+湿気;しっけ;濕氣
+気温;きおん;氣溫
+季節;きせつ;季節
+地震;じしん;地震
+台風;たいふう;颱風
+虹;にじ;彩虹
+霧;きり;霧
+星;ほし;星星
+月;つき;月亮
+太陽;たいよう;太陽
+雲;くも;雲
+雷;かみなり;雷
+天気予報;てんきよほう;天氣預報
+梅雨;つゆ;梅雨
+火事;かじ;火災
+自然;しぜん;自然
+森;もり;森林
+林;はやし;樹林
+草;くさ;草
+葉;は;葉子
+枝;えだ;樹枝
+石;いし;石頭
+砂;すな;沙
+海岸;かいがん;海岸
+湖;みずうみ;湖
+空気;くうき;空氣
+光;ひかり;光
+光る;ひかる;發光
+火;ひ;火
+虫;むし;蟲
+植える;うえる;種植
+花見;はなみ;賞花
+紅葉;もみじ;楓葉、紅葉
+桜;さくら;櫻花
+暮れる;くれる;天黑
+止む;やむ;（雨）停
+揺れる;ゆれる;搖晃
+逃げる;にげる;逃跑
+危険;きけん;危險
+安全;あんぜん;安全
+曇る;くもる;變陰天
+`,
+21: `
+嬉しい;うれしい;高興的
+悲しい;かなしい;悲傷的
+寂しい;さびしい;寂寞的
+恥ずかしい;はずかしい;害羞、丟臉
+羨ましい;うらやましい;羨慕的
+怖い;こわい;可怕的
+恐ろしい;おそろしい;恐怖的
+不便;ふべん;不方便
+丁寧;ていねい;禮貌、仔細
+熱心;ねっしん;熱心
+真面目;まじめ;認真
+複雑;ふくざつ;複雜
+残念;ざんねん;可惜
+心配;しんぱい;擔心
+安心;あんしん;安心
+不安;ふあん;不安
+大変;たいへん;辛苦、嚴重
+無理;むり;勉強、不可能
+特別;とくべつ;特別
+必要;ひつよう;必要
+十分;じゅうぶん;充分
+適当;てきとう;適當、隨便
+自由;じゆう;自由
+得意;とくい;擅長、拿手
+苦手;にがて;不擅長、怕
+楽;らく;輕鬆
+変;へん;奇怪
+素敵;すてき;很棒、漂亮
+立派;りっぱ;出色、氣派
+大事;だいじ;重要
+正しい;ただしい;正確
+珍しい;めずらしい;稀奇
+厳しい;きびしい;嚴格
+細かい;こまかい;細小、仔細
+懐かしい;なつかしい;懷念
+うまい;;好吃、厲害
+ひどい;;過分、嚴重
+すごい;;厲害
+怒る;おこる;生氣
+泣く;なく;哭
+笑う;わらう;笑
+驚く;おどろく;驚訝
+喜ぶ;よろこぶ;高興、歡喜
+感じる;かんじる;感覺
+興味;きょうみ;興趣
+`,
+22: `
+変わる;かわる;改變（自動詞）
+変える;かえる;改變（他動詞）
+上がる;あがる;上升
+上げる;あげる;提高、舉起
+下がる;さがる;下降
+下げる;さげる;降低
+集まる;あつまる;聚集
+集める;あつめる;收集
+並べる;ならべる;排列
+建てる;たてる;建造
+建つ;たつ;蓋好、建成
+動く;うごく;動、移動
+動かす;うごかす;移動（他動詞）
+止める;とめる;停下（他動詞）
+止まる;とまる;停止（自動詞）
+起こす;おこす;叫醒、引起
+起こる;おこる;發生
+割れる;われる;破裂
+割る;わる;打破
+付く;つく;附著、（燈）亮
+消える;きえる;消失、熄滅
+開く;あく;（門）開
+閉まる;しまる;（門）關
+始める;はじめる;開始（他動詞）
+増える;ふえる;增加
+減る;へる;減少
+続く;つづく;持續
+見える;みえる;看得見
+聞こえる;きこえる;聽得見
+生きる;いきる;活著
+亡くなる;なくなる;過世
+無くなる;なくなる;不見、用完
+無くす;なくす;弄丟
+登る;のぼる;爬、登
+気づく;きづく;察覺
+伝える;つたえる;傳達
+信じる;しんじる;相信
+運ぶ;はこぶ;搬運
+貼る;はる;貼
+踏む;ふむ;踩
+触る;さわる;觸摸
+投げる;なげる;丟、投
+打つ;うつ;打
+`,
+23: `
+思い出す;おもいだす;想起
+思う;おもう;想、認為
+褒める;ほめる;稱讚
+叱る;しかる;責罵
+謝る;あやまる;道歉
+許す;ゆるす;原諒
+約束する;やくそくする;約定
+誘う;さそう;邀約
+祝う;いわう;祝賀
+いらっしゃる;;在、來、去（尊敬語）
+おっしゃる;;說（尊敬語）
+召し上がる;めしあがる;吃、喝（尊敬語）
+ご覧になる;ごらんになる;看（尊敬語）
+なさる;;做（尊敬語）
+くださる;;給我（尊敬語）
+参る;まいる;去、來（謙讓語）
+申す;もうす;說、叫做（謙讓語）
+いたす;;做（謙讓語）
+いただく;;吃、喝、收下（謙讓語）
+拝見する;はいけんする;看（謙讓語）
+伺う;うかがう;拜訪、請教（謙讓語）
+おる;;在（謙讓語）
+差し上げる;さしあげる;給（謙讓語）
+ございます;;有、是（鄭重語）
+やる;;給（晚輩、動植物）、做
+気にする;きにする;在意
+気をつける;きをつける;小心、注意
+返事;へんじ;回覆
+メール;;電子郵件
+会話;かいわ;會話
+冗談;じょうだん;玩笑
+嘘;うそ;謊言
+喧嘩;けんか;吵架
+文化;ぶんか;文化
+`,
+24: `
+だんだん;;漸漸地
+なるべく;;盡量
+できるだけ;;盡可能
+もし;;如果
+たとえば;;例如
+それに;;而且
+しかし;;但是
+それで;;因此、於是
+つまり;;也就是說
+そのうえ;;再加上
+やっぱり;;果然、還是
+きっと;;一定
+必ず;かならず;必定
+ずっと;;一直、～得多
+さっき;;剛才
+そろそろ;;差不多該
+はっきり;;清楚地
+しっかり;;好好地、牢牢地
+すっかり;;完全
+ほとんど;;幾乎
+特に;とくに;特別是
+急に;きゅうに;突然
+決して;けっして;絕對（不）
+なかなか;;相當、（不）容易
+もうすぐ;;快要
+やっと;;終於
+ちっとも;;一點也（不）
+もちろん;;當然
+ぜひ;;務必
+ちょうど;;剛好
+たまに;;偶爾
+非常に;ひじょうに;非常
+大体;だいたい;大概、大致
+または;;或者
+それとも;;還是（疑問）
+ところで;;話說回來
+すると;;於是、結果
+けれど;;但是、不過
+ですから;;所以
+別に;べつに;並不特別（＋否定）
+一生懸命;いっしょうけんめい;拚命地
+`
+};
+
+// 補充單字（併入對應週次）
+const VOCAB_EXTRA = {
+4:`皆さん;みなさん;各位、大家
+方;かた;～位（禮貌說法）
+おじいさん;;爺爺、老爺爺
+おばあさん;;奶奶、老奶奶
+おじさん;;叔叔、伯伯
+おばさん;;阿姨
+奥さん;おくさん;（別人的）太太
+ボールペン;;原子筆
+消しゴム;けしゴム;橡皮擦
+ページ;;頁
+字;じ;字`,
+5:`今晩;こんばん;今晚
+一週間;いっしゅうかん;一個星期
+〜か月;〜かげつ;～個月
+〜年;〜ねん;～年
+おととし;;前年
+再来年;さらいねん;後年
+再来週;さらいしゅう;下下週`,
+6:`紅茶;こうちゃ;紅茶
+バター;;奶油
+本屋;ほんや;書店
+パン屋;パンや;麵包店
+スカート;;裙子
+セーター;;毛衣
+コート;;大衣
+ネクタイ;;領帶
+ポケット;;口袋`,
+7:`お手洗い;おてあらい;洗手間
+自動車;じどうしゃ;汽車
+ポスト;;郵筒`,
+8:`吸う;すう;吸（菸）
+違う;ちがう;不對、不同
+締める;しめる;繫（領帶、安全帶）
+晴れる;はれる;放晴
+鳴く;なく;（動物）叫`,
+9:`丸い;まるい;圓的
+厚い;あつい;厚的
+薄い;うすい;薄的、淡的
+嫌;いや;討厭、不願意`,
+10:`テーブル;;桌子
+ストーブ;;暖爐
+ギター;;吉他
+文章;ぶんしょう;文章`,
+12:`取り替える;とりかえる;更換
+塗る;ぬる;塗、擦
+濡れる;ぬれる;淋濕
+乾く;かわく;乾
+都合;つごう;方便與否、情況`,
+13:`連れる;つれる;帶（人、動物）
+別れる;わかれる;分開、分手
+似る;にる;像
+結婚式;けっこんしき;婚禮
+寄る;よる;順道去`,
+14:`噛む;かむ;咬、嚼
+足す;たす;加、添
+合う;あう;合適、一致
+柔らかい;やわらかい;軟的
+固い;かたい;硬的
+匂い;におい;氣味`,
+15:`我慢する;がまんする;忍耐
+注意する;ちゅういする;注意、提醒
+様子;ようす;樣子、情況
+丈夫;じょうぶ;結實、健壯`,
+16:`理由;りゆう;理由
+方法;ほうほう;方法
+結果;けっか;結果
+入学式;にゅうがくしき;入學典禮
+卒業式;そつぎょうしき;畢業典禮
+運動会;うんどうかい;運動會
+通う;かよう;（定期）往返、上（學）
+努力する;どりょくする;努力
+失敗する;しっぱいする;失敗
+成功する;せいこうする;成功`,
+17:`技術;ぎじゅつ;技術
+社会;しゃかい;社會
+関係;かんけい;關係
+機会;きかい;機會
+遠慮する;えんりょする;客氣、婉拒
+役に立つ;やくにたつ;有幫助、有用`,
+18:`見物;けんぶつ;參觀、遊覽
+美術館;びじゅつかん;美術館
+博物館;はくぶつかん;博物館
+動物園;どうぶつえん;動物園
+祭り;まつり;祭典、廟會
+進む;すすむ;前進
+向かう;むかう;前往、朝向
+過ぎる;すぎる;經過、超過
+事故;じこ;事故`,
+19:`預ける;あずける;寄放
+知らせる;しらせる;通知
+人形;にんぎょう;娃娃
+おもちゃ;;玩具
+故障;こしょう;故障
+泥棒;どろぼう;小偷
+盗む;ぬすむ;偷
+警察;けいさつ;警察
+捕まえる;つかまえる;抓住`,
+20:`深い;ふかい;深
+浅い;あさい;淺
+美しい;うつくしい;美麗
+滑る;すべる;滑
+形;かたち;形狀
+大きさ;おおきさ;大小
+音;おと;聲音（物體發出的）
+お正月;おしょうがつ;新年`,
+21:`偉い;えらい;了不起、地位高
+盛ん;さかん;盛行、興盛
+確か;たしか;確實、好像是
+失礼;しつれい;失禮
+結構;けっこう;相當、不用了`,
+22:`折る;おる;折斷、折
+移る;うつる;移動、傳染
+写す;うつす;抄寫、拍攝
+鳴る;なる;（鈴、鐘）響
+回る;まわる;轉、繞
+守る;まもる;遵守、保護
+済む;すむ;結束、解決`,
+23:`申し上げる;もうしあげる;說（謙讓語）
+尋ねる;たずねる;詢問
+応援する;おうえんする;加油、支持
+祈る;いのる;祈禱
+試合;しあい;比賽
+選手;せんしゅ;選手
+優勝;ゆうしょう;冠軍
+勝つ;かつ;贏
+負ける;まける;輸`,
+24:`政治;せいじ;政治
+国際;こくさい;國際
+地理;ちり;地理
+原因;げんいん;原因
+騒ぐ;さわぐ;吵鬧
+会場;かいじょう;會場`
+};
+for (const w in VOCAB_EXTRA) VOCAB_RAW[w] = VOCAB_RAW[w].trimEnd() + '\n' + VOCAB_EXTRA[w] + '\n';
+
+// 漢字：「漢字;音讀;訓讀;意思;例詞;例詞讀音;例詞意思」
+// 第4–11週 = N5 81字；第12–24週 = N4 167字（原教材全部收錄，重複例詞已替換）
+const KANJI_RAW = {
+4: `
+人;ジン・ニン;ひと;人;日本人;にほんじん;日本人
+男;ダン・ナン;おとこ;男;男の人;おとこのひと;男人
+女;ジョ・ニョ;おんな;女;女の子;おんなのこ;女孩
+子;シ・ス;こ;孩子;子供;こども;小孩
+父;フ;ちち;父親;お父さん;おとうさん;父親
+母;ボ;はは;母親;お母さん;おかあさん;母親
+友;ユウ;とも;朋友;友達;ともだち;朋友
+名;メイ・ミョウ;な;名字;名前;なまえ;名字
+先;セン;さき;先、前;先生;せんせい;老師
+生;セイ・ショウ;い(きる)・う(まれる);生、出生;学生;がくせい;學生
+`,
+5: `
+一;イチ;ひと(つ);一;一人;ひとり;一個人
+二;ニ;ふた(つ);二;二月;にがつ;二月
+三;サン;みっ(つ);三;三日;みっか;三號、三天
+四;シ;よ・よん・よっ(つ);四;四時;よじ;四點
+五;ゴ;いつ(つ);五;五分;ごふん;五分鐘
+六;ロク;むっ(つ);六;六百;ろっぴゃく;六百
+七;シチ;なな(つ);七;七月;しちがつ;七月
+八;ハチ;やっ(つ);八;八百屋;やおや;蔬果店
+九;キュウ・ク;ここの(つ);九;九時;くじ;九點
+十;ジュウ;とお;十;十日;とおか;十號
+百;ヒャク;-;百;三百;さんびゃく;三百
+千;セン;ち;千;三千;さんぜん;三千
+万;マン;-;萬;一万円;いちまんえん;一萬日圓
+円;エン;まる(い);日圓、圓;百円;ひゃくえん;一百日圓
+`,
+6: `
+日;ニチ・ジツ;ひ・か;日、太陽;毎日;まいにち;每天
+月;ゲツ・ガツ;つき;月;月曜日;げつようび;星期一
+火;カ;ひ;火;火曜日;かようび;星期二
+水;スイ;みず;水;水曜日;すいようび;星期三
+木;モク;き;樹;木曜日;もくようび;星期四
+金;キン;かね;金、錢;お金;おかね;錢
+土;ド;つち;土;土曜日;どようび;星期六
+年;ネン;とし;年;来年;らいねん;明年
+時;ジ;とき;時;時間;じかん;時間
+分;ブン・フン;わ(かる);分、理解;分かる;わかる;懂
+半;ハン;なか(ば);半;半分;はんぶん;一半
+`,
+7: `
+今;コン;いま;現在;今日;きょう;今天
+午;ゴ;-;正午;午後;ごご;下午
+前;ゼン;まえ;前;午前;ごぜん;上午
+後;ゴ・コウ;うし(ろ)・あと;後;後ろ;うしろ;後面
+毎;マイ;-;每;毎朝;まいあさ;每天早上
+何;カ;なに・なん;什麼;何時;なんじ;幾點
+間;カン・ケン;あいだ;之間;人間;にんげん;人類
+上;ジョウ;うえ・あ(がる);上;上手;じょうず;擅長
+下;カ・ゲ;した・さ(がる);下;地下鉄;ちかてつ;地下鐵
+左;サ;ひだり;左;左手;ひだりて;左手
+右;ウ・ユウ;みぎ;右;右側;みぎがわ;右側
+`,
+8: `
+大;ダイ・タイ;おお(きい);大;大学;だいがく;大學
+小;ショウ;ちい(さい)・こ;小;小学校;しょうがっこう;小學
+中;チュウ;なか;中、裡面;中国;ちゅうごく;中國
+外;ガイ;そと;外;外国;がいこく;外國
+国;コク;くに;國;韓国;かんこく;韓國
+学;ガク;まな(ぶ);學;学校;がっこう;學校
+校;コウ;-;學校;高校;こうこう;高中
+本;ホン;もと;書、根本;日本;にほん;日本
+山;サン;やま;山;富士山;ふじさん;富士山
+川;セン;かわ;河;川;かわ;河
+`,
+9: `
+天;テン;あめ;天;天気;てんき;天氣
+気;キ;-;氣;気持ち;きもち;心情、感覺
+雨;ウ;あめ;雨;大雨;おおあめ;大雨
+電;デン;-;電;電話;でんわ;電話
+車;シャ;くるま;車;電車;でんしゃ;電車
+東;トウ;ひがし;東;東口;ひがしぐち;（車站）東口
+西;セイ・サイ;にし;西;西口;にしぐち;（車站）西口
+南;ナン;みなみ;南;南口;みなみぐち;（車站）南口
+北;ホク;きた;北;北口;きたぐち;（車站）北口
+`,
+10: `
+白;ハク;しろ(い);白;白い;しろい;白色的
+長;チョウ;なが(い);長、首長;社長;しゃちょう;社長
+高;コウ;たか(い);高、貴;高い;たかい;高的、貴的
+入;ニュウ;はい(る)・い(れる);進入;入口;いりぐち;入口
+出;シュツ;で(る)・だ(す);出;出口;でぐち;出口
+行;コウ・ギョウ;い(く);去、行;行く;いく;去
+来;ライ;く(る);來;来週;らいしゅう;下週
+耳;ジ;みみ;耳朵;耳;みみ;耳朵
+`,
+11: `
+見;ケン;み(る);看;見物;けんぶつ;參觀、遊覽
+聞;ブン;き(く);聽、問;聞く;きく;聽、問
+読;ドク;よ(む);讀;読書;どくしょ;讀書
+書;ショ;か(く);寫;辞書;じしょ;字典
+話;ワ;はな(す)・はなし;說話;会話;かいわ;會話
+語;ゴ;かた(る);語言;日本語;にほんご;日語
+食;ショク;た(べる);吃;食事;しょくじ;用餐
+休;キュウ;やす(む);休息;休み;やすみ;休假
+`,
+12: `
+会;カイ;あ(う);見面、會;会う;あう;見面
+同;ドウ;おな(じ);相同;同じ;おなじ;相同的
+事;ジ;こと;事情;用事;ようじ;要辦的事
+自;ジ;みずか(ら);自己;自分;じぶん;自己
+社;シャ;やしろ;公司、神社;会社;かいしゃ;公司
+発;ハツ;-;出發、發生;出発;しゅっぱつ;出發
+者;シャ;もの;人、者;若者;わかもの;年輕人
+地;チ・ジ;-;土地、地面;地震;じしん;地震
+業;ギョウ;わざ;事業、行業;授業;じゅぎょう;上課
+方;ホウ;かた;方向、方式;使い方;つかいかた;用法
+新;シン;あたら(しい);新的;新幹線;しんかんせん;新幹線
+場;ジョウ;ば;場所;場所;ばしょ;場所、地點
+員;イン;-;成員、職員;店員;てんいん;店員
+`,
+13: `
+立;リツ;た(つ);站立;立つ;たつ;站
+開;カイ;ひら(く)・あ(く);打開;開く;ひらく;打開、舉辦
+手;シュ;て;手;手紙;てがみ;信
+力;リョク;ちから;力量;力;ちから;力量
+問;モン;と(う);問;問題;もんだい;問題
+代;ダイ;か(わる);代替、時代;時代;じだい;時代
+明;メイ;あか(るい);明亮;説明;せつめい;說明
+動;ドウ;うご(く);移動、活動;動物;どうぶつ;動物
+京;キョウ;-;首都;東京;とうきょう;東京
+目;モク;め;眼睛、目標;目的;もくてき;目的
+通;ツウ;とお(る);通過、交通;交通;こうつう;交通
+言;ゲン;い(う);說、言語;言葉;ことば;語言、詞語
+理;リ;-;道理;理由;りゆう;理由
+`,
+14: `
+体;タイ;からだ;身體;体;からだ;身體
+田;デン;た;田地;田舎;いなか;鄉下
+主;シュ;おも;主要、主人;主人;しゅじん;丈夫、主人
+題;ダイ;-;題目;宿題;しゅくだい;作業
+意;イ;-;想法、意思;意味;いみ;意思
+不;フ;-;不、非;不安;ふあん;不安
+作;サク;つく(る);製作;作る;つくる;製作
+用;ヨウ;もち(いる);使用;使用;しよう;使用
+度;ド;たび;次數、程度;今度;こんど;這次、下次
+強;キョウ;つよ(い);強;強い;つよい;強的
+公;コウ;おおやけ;公共;公園;こうえん;公園
+持;ジ;も(つ);拿、持有;持つ;もつ;拿著
+野;ヤ;の;田野、野外;野球;やきゅう;棒球
+`,
+15: `
+以;イ;-;以;以外;いがい;以外
+思;シ;おも(う);想;思う;おもう;想、認為
+家;カ;いえ;家;家具;かぐ;家具
+世;セイ;よ;世界、時代;世の中;よのなか;世上、社會
+多;タ;おお(い);多;多い;おおい;多的
+正;セイ;ただ(しい);正確;正しい;ただしい;正確的
+安;アン;やす(い);便宜、安全;安全;あんぜん;安全
+院;イン;-;院、機構;病院;びょういん;醫院
+心;シン;こころ;心;心配;しんぱい;擔心
+界;カイ;-;界、範圍;世界;せかい;世界
+教;キョウ;おし(える);教;教える;おしえる;教導
+文;ブン;ふみ;文章、句子;文化;ぶんか;文化
+元;ゲン;もと;原本、起源;元気;げんき;有精神
+`,
+16: `
+重;ジュウ;おも(い);重的、重要;重い;おもい;重的
+近;キン;ちか(い);近的;近く;ちかく;附近
+考;コウ;かんが(える);思考;考える;かんがえる;思考
+画;ガ;-;畫、計畫;映画;えいが;電影
+海;カイ;うみ;海;海;うみ;海洋
+売;バイ;う(る);賣;売る;うる;賣
+知;チ;し(る);知道;知る;しる;知道
+道;ドウ;みち;道路、道理;道;みち;道路
+集;シュウ;あつ(める);收集、聚集;集める;あつめる;收集
+別;ベツ;わか(れる);分別、另外;別々;べつべつ;分開的
+物;ブツ;もの;物品;買い物;かいもの;購物
+使;シ;つか(う);使用;使う;つかう;使用
+品;ヒン;しな;物品、品質;品物;しなもの;商品
+`,
+17: `
+計;ケイ;はか(る);計算、計畫;時計;とけい;時鐘
+死;シ;し(ぬ);死亡;死ぬ;しぬ;死
+特;トク;-;特別;特別;とくべつ;特別
+私;シ;わたし;我、私人;私;わたし;我
+始;シ;はじ(める);開始;始める;はじめる;開始（他動詞）
+朝;チョウ;あさ;早晨;朝;あさ;早上
+運;ウン;はこ(ぶ);運送、運氣;運動;うんどう;運動
+終;シュウ;お(わる);結束;終わる;おわる;結束
+台;ダイ;-;台、平台;台所;だいどころ;廚房
+広;コウ;ひろ(い);寬廣;広い;ひろい;寬廣的
+住;ジュウ;す(む);居住;住む;すむ;居住
+無;ム;な(い);無、沒有;無理;むり;勉強、不可能
+真;シン;ま;真實;真面目;まじめ;認真
+`,
+18: `
+有;ユウ;あ(る);有、存在;有名;ゆうめい;有名
+口;コウ;くち;嘴、口;人口;じんこう;人口
+少;ショウ;すこ(し)・すく(ない);少、一點;少し;すこし;一點
+町;チョウ;まち;城鎮、街道;町;まち;城鎮
+料;リョウ;-;材料、費用;料理;りょうり;料理
+工;コウ;-;工、工程;工場;こうじょう;工廠
+建;ケン;た(てる);建造;建てる;たてる;建造
+空;クウ;そら;天空、空;空港;くうこう;機場
+急;キュウ;いそ(ぐ);急、緊急;急ぐ;いそぐ;趕快
+止;シ;と(まる);停止;止まる;とまる;停止
+送;ソウ;おく(る);送、寄送;送る;おくる;送、寄
+切;セツ;き(る);切、剪;切る;きる;切
+転;テン;ころ(ぶ);轉、旋轉;運転;うんてん;駕駛
+`,
+19: `
+研;ケン;と(ぐ);研究、磨;研究室;けんきゅうしつ;研究室
+足;ソク;あし;腳、足夠;足;あし;腳
+究;キュウ;きわ(める);研究、追究;研究;けんきゅう;研究
+楽;ガク・ラク;たの(しい);快樂、音樂;楽しい;たのしい;快樂的
+起;キ;お(きる);起床、發生;起きる;おきる;起床
+着;チャク;き(る)・つ(く);穿、到達;着る;きる;穿（衣服）
+店;テン;みせ;店鋪;店;みせ;商店
+病;ビョウ;や(む);生病;病気;びょうき;生病
+質;シツ;-;品質、性質;質問;しつもん;提問
+待;タイ;ま(つ);等待;待つ;まつ;等待
+試;シ;こころ(みる);嘗試、考試;試験;しけん;考試
+族;ゾク;-;家族、族群;家族;かぞく;家人
+銀;ギン;-;銀;銀行;ぎんこう;銀行
+`,
+20: `
+早;ソウ;はや(い);早的;早い;はやい;早的
+映;エイ;うつ(る);映照、放映;映る;うつる;映照、照出
+親;シン;おや;父母、親密;親切;しんせつ;親切
+験;ケン;-;驗證、測試;経験;けいけん;經驗
+英;エイ;-;英國、英語;英語;えいご;英語
+医;イ;-;醫療;医者;いしゃ;醫生
+仕;シ;つか(える);做、服務;仕事;しごと;工作
+去;キョ;さ(る);離開、過去;去年;きょねん;去年
+味;ミ;あじ;味道;趣味;しゅみ;興趣、嗜好
+写;シャ;うつ(す);拍照、抄寫;写真;しゃしん;照片
+字;ジ;-;字、文字;文字;もじ;文字
+答;トウ;こた(える);回答;答える;こたえる;回答
+夜;ヤ;よる;夜晚;夜;よる;夜晚
+`,
+21: `
+音;オン;おと;聲音;発音;はつおん;發音
+注;チュウ;そそ(ぐ);注入、注意;注意;ちゅうい;注意
+帰;キ;かえ(る);回去、回家;帰る;かえる;回去
+古;コ;ふる(い);古老、舊的;古い;ふるい;舊的
+歌;カ;うた;歌;歌;うた;歌
+買;バイ;か(う);購買;買う;かう;購買
+悪;アク;わる(い);壞的;悪い;わるい;不好的
+図;ズ・ト;はか(る);圖、計畫;地図;ちず;地圖
+週;シュウ;-;星期;今週;こんしゅう;這週
+室;シツ;むろ;房間;教室;きょうしつ;教室
+歩;ホ;ある(く);走、步;散歩;さんぽ;散步
+風;フウ;かぜ;風、樣式;台風;たいふう;颱風
+紙;シ;かみ;紙;紙;かみ;紙
+`,
+22: `
+黒;コク;くろ(い);黑色;黒い;くろい;黑色的
+花;カ;はな;花;花;はな;花
+春;シュン;はる;春天;春;はる;春天
+赤;セキ;あか(い);紅色;赤い;あかい;紅色的
+青;セイ;あお(い);藍色、青色;青い;あおい;藍色的
+館;カン;-;館、建築物;図書館;としょかん;圖書館
+屋;オク;や;屋、店家;屋根;やね;屋頂
+色;ショク;いろ;顏色;色;いろ;顏色
+走;ソウ;はし(る);跑;走る;はしる;跑
+秋;シュウ;あき;秋天;秋;あき;秋天
+夏;カ;なつ;夏天;夏;なつ;夏天
+習;シュウ;なら(う);學習;習う;ならう;學習
+駅;エキ;-;車站;駅;えき;車站
+`,
+23: `
+洋;ヨウ;-;西洋、海洋;洋食;ようしょく;西餐
+旅;リョ;たび;旅行;旅行;りょこう;旅行
+服;フク;-;衣服;洋服;ようふく;西式服裝
+夕;セキ;ゆう;傍晚;夕方;ゆうがた;傍晚
+借;シャク;か(りる);借（入）;借りる;かりる;借入
+曜;ヨウ;-;星期幾;曜日;ようび;星期
+飲;イン;の(む);喝;飲む;のむ;喝
+肉;ニク;-;肉;肉;にく;肉
+貸;タイ;か(す);借（出）;貸す;かす;借出
+堂;ドウ;-;堂、大廳;食堂;しょくどう;食堂
+鳥;チョウ;とり;鳥;鳥;とり;鳥
+飯;ハン;めし;飯、餐;ご飯;ごはん;飯
+勉;ベン;つと(める);努力;勉強;べんきょう;學習
+`,
+24: `
+冬;トウ;ふゆ;冬天;冬;ふゆ;冬天
+昼;チュウ;ひる;白天、中午;昼ご飯;ひるごはん;午餐
+茶;チャ;-;茶;お茶;おちゃ;茶
+弟;テイ;おとうと;弟弟;弟;おとうと;弟弟
+牛;ギュウ;うし;牛;牛肉;ぎゅうにく;牛肉
+魚;ギョ;さかな;魚;魚;さかな;魚
+兄;キョウ;あに;哥哥;兄;あに;哥哥
+犬;ケン;いぬ;狗;犬;いぬ;狗
+妹;マイ;いもうと;妹妹;妹;いもうと;妹妹
+姉;シ;あね;姊姊;姉;あね;姊姊
+漢;カン;-;中國、漢;漢字;かんじ;漢字
+`
+};
+
+// 文法：t 標題、m 意思、s 接續、ex 例句、zh 翻譯、q 測驗（＿＿為空格、括號內為中文提示）、a 答案、d 干擾選項
+const G = (t, m, s, ex, zh, q, a, d) => ({ t, m, s, ex, zh, q, a, d });
+const GRAMMAR_RAW = {
+4: [
+G('〜は〜です','「A 是 B」，最基本的句型。は當助詞時唸 wa。','名詞 + は + 名詞 + です','私は学生です。','我是學生。','私＿＿学生です。（我是學生）','は',['を','に','で']),
+G('〜じゃありません','名詞的否定「不是～」。書面語是「ではありません」。','名詞 + じゃありません','私は先生じゃありません。','我不是老師。','私は先生＿＿。（我不是老師）','じゃありません',['です','でした','ですか']),
+G('〜か','放在句尾變成疑問句，不需要問號也可以。','句子 + か','あなたは学生ですか。','你是學生嗎？','これは何です＿＿。（這是什麼？）','か',['よ','を','も']),
+G('の（所屬）','「的」，連接兩個名詞。','名詞 + の + 名詞','これは私の本です。','這是我的書。','これは私＿＿かばんです。（這是我的包包）','の',['が','を','は']),
+G('も','「也」，取代は或が。','名詞 + も','田中さんは学生です。私も学生です。','田中是學生。我也是學生。','私＿＿学生です。（我也是學生）','も',['を','で','の']),
+G('これ／それ／あれ／どれ','這個／那個（靠近對方）／那個（遠處）／哪個，單獨當名詞用。','これ・それ・あれ・どれ + は／が','それは私の傘です。','那是我的傘。','＿＿は何ですか。（遠處那個是什麼？）','あれ',['これ','それ','どれ']),
+G('この／その／あの／どの','後面一定要接名詞。','この・その・あの・どの + 名詞','この本は私のです。','這本書是我的。','＿＿人はだれですか。（那個人（遠處）是誰？）','あの',['あれ','この','どれ']),
+G('ここ／そこ／あそこ／どこ','這裡／那裡／那邊／哪裡，指地點。','場所 + は + ここ／そこ…です','トイレはどこですか。','廁所在哪裡？','駅は＿＿ですか。（車站在哪裡？）','どこ',['だれ','なに','いつ']),
+G('疑問詞：何／だれ','什麼／誰。問人禮貌一點用「どなた」。','〜は + 何／だれ + ですか','あの人はだれですか。','那個人是誰？','あの人は＿＿ですか。（那個人是誰？）','だれ',['なに','どこ','いつ']),
+G('〜から来ました','「從～來」，自我介紹必備。','地名 + から来ました','台湾から来ました。','我從台灣來。','台湾＿＿来ました。（我從台灣來）','から',['まで','を','で']),
+G('〜でした／〜じゃありませんでした','名詞句的過去式：是～／不是～。','名詞 + でした／じゃありませんでした','昨日は休みでした。','昨天是休假。','昨日は雨＿＿。（昨天是雨天）','でした',['です','ません','ましょう'])
+],
+5: [
+G('〜ます／〜ません','動詞禮貌形的現在（未來）肯定與否定。','動詞ます形','毎朝コーヒーを飲みます。','我每天早上喝咖啡。','私はお酒を飲み＿＿。（我不喝酒）','ません',['ます','ました','ましょう']),
+G('〜ました／〜ませんでした','動詞禮貌形的過去肯定與否定。','動詞ます形去ます + ました／ませんでした','昨日、映画を見ました。','昨天看了電影。','昨日は勉強し＿＿。（昨天沒有讀書）','ませんでした',['ません','ました','ましょう']),
+G('を（受詞）','標示動作的對象。を唸 o。','名詞 + を + 他動詞','パンを食べます。','吃麵包。','水＿＿飲みます。（喝水）','を',['に','で','へ']),
+G('に（時間點）','在具體的時間點，如幾點、幾號、星期幾。「今日、明日、毎日」不加に。','時間 + に','七時に起きます。','七點起床。','六時＿＿起きます。（六點起床）','に',['で','を','が']),
+G('〜から〜まで','從～到～（時間或地點）。','起點 + から + 終點 + まで','九時から五時まで働きます。','從九點工作到五點。','月曜日＿＿金曜日まで学校です。（星期一到星期五上學）','から',['まで','に','で']),
+G('へ／に（方向）','往～去，搭配「行く、来る、帰る」。へ唸 e。','場所 + へ／に + 行く・来る・帰る','来週、大阪へ行きます。','下週要去大阪。','明日、京都＿＿行きます。（明天去京都）','へ',['を','で','が']),
+G('で（手段）','用～（交通工具、方法、語言）。','名詞 + で','電車で会社へ行きます。','搭電車去公司。','バス＿＿学校へ行きます。（搭公車去學校）','で',['に','を','へ']),
+G('と（一起）','和～一起。','人 + と','友達と映画を見ます。','和朋友看電影。','家族＿＿旅行します。（和家人旅行）','と',['を','で','へ']),
+G('〜ませんか','邀約「要不要一起～？」，比「ますか」更客氣。','動詞ます形去ます + ませんか','一緒に昼ご飯を食べませんか。','要不要一起吃午餐？','一緒にお茶を飲み＿＿か。（要不要一起喝茶？）','ません',['ます','ました','ましょう']),
+G('〜ましょう','提議「一起～吧」。','動詞ます形去ます + ましょう','少し休みましょう。','稍微休息一下吧。','じゃ、行き＿＿。（那麼，走吧）','ましょう',['ません','ました','ます']),
+G('いつ／何時','什麼時候／幾點。','いつ・何時 + ですか','誕生日はいつですか。','生日是什麼時候？','誕生日は＿＿ですか。（生日是什麼時候？）','いつ',['何時','どこ','だれ'])
+],
+6: [
+G('い形容詞','以い結尾的形容詞，否定把い改成くない。','い形容詞 + です／〜くないです','この本は面白いです。','這本書很有趣。','この料理は辛＿＿です。（這道菜不辣）','くない',['い','かった','じゃない']),
+G('な形容詞','修飾名詞時加な；否定用じゃありません。','な形容詞 + な + 名詞','ここは静かな町です。','這裡是安靜的城鎮。','京都はきれい＿＿町です。（京都是美麗的城市）','な',['の','い','に']),
+G('形容詞的過去式','い形容詞：い→かった；な形容詞：でした。注意「いい」→「よかった」。','い形容詞去い + かったです','昨日は寒かったです。','昨天很冷。','旅行は楽し＿＿です。（旅行很開心（過去））','かった',['くない','い','くて']),
+G('あります／います','有、在。沒有生命的東西用あります，人和動物用います。','〜が + あります／います','公園に猫がいます。','公園裡有貓。','机の上に本が＿＿。（桌上有書）','あります',['います','します','です']),
+G('に（存在位置）','在～（東西或人存在的地方）。','場所 + に + 〜があります／います','駅の前に銀行があります。','車站前面有銀行。','部屋＿＿テレビがあります。（房間裡有電視）','に',['で','を','へ']),
+G('〜がほしい','想要（某樣東西）。','名詞 + が + ほしいです','新しいパソコンがほしいです。','想要新電腦。','新しい靴＿＿ほしいです。（想要新鞋子）','が',['を','に','で']),
+G('〜たい','想要（做某事）。','動詞ます形去ます + たい','日本へ行きたいです。','想去日本。','ラーメンが食べ＿＿です。（想吃拉麵）','たい',['ほしい','ます','ない']),
+G('〜をください','請給我～，購物點餐必備。','名詞 + を + ください','このりんごを三つください。','請給我三個這種蘋果。','コーヒー＿＿ください。（請給我咖啡）','を',['が','に','で']),
+G('〜と〜とどちらが','A 和 B 哪個比較～？','A + と + B + と、どちらが + 形容詞','電車とバスとどちらが速いですか。','電車和公車哪個快？','夏と冬と＿＿が好きですか。（夏天和冬天比較喜歡哪個？）','どちら',['どこ','だれ','いつ']),
+G('〜のほうが','～比較～（回答比較句）。','名詞 + のほうが + 形容詞','電車のほうが速いです。','電車比較快。','冬の＿＿が好きです。（比較喜歡冬天）','ほう',['より','ほど','まで']),
+G('〜でいちばん','在～範圍裡最～。','範圍 + で + いちばん + 形容詞','日本でいちばん高い山は富士山です。','日本最高的山是富士山。','クラスで＿＿背が高いです。（在班上個子最高）','いちばん',['もっと','とても','あまり'])
+],
+7: [
+G('で（動作場所）','在～（做某個動作）。和表示存在的「に」不同。','場所 + で + 動作','図書館で勉強します。','在圖書館讀書。','公園＿＿テニスをします。（在公園打網球）','で',['に','を','へ']),
+G('〜に行きます（目的）','去做～。','動詞ます形去ます／動作名詞 + に + 行く','デパートへ買い物に行きます。','去百貨公司購物。','映画を見＿＿行きます。（去看電影）','に',['で','へ','を']),
+G('を（經過、離開）','經過某處、從某處離開，搭配移動動詞。','場所 + を + 渡る・歩く・降りる・出る','橋を渡ります。','過橋。','電車＿＿降ります。（下電車）','を',['に','で','へ']),
+G('に（乘坐、進入）','搭乘交通工具、進入某處。','名詞 + に + 乗る・入る','タクシーに乗ります。','搭計程車。','電車＿＿乗ります。（搭電車）','に',['を','で','へ']),
+G('て形的變化','一類動詞：う・つ・る→って；む・ぶ・ぬ→んで；く→いて；ぐ→いで；す→して（例外：行く→行って）。二類去る加て；する→して、来る→来て。','書く→書いて、読む→読んで、食べる→食べて','友達に会って、話しました。','和朋友見面聊了天。','「飲む」的て形是？','飲んで',['飲みて','飲って','飲いて']),
+G('〜てください','請～（請求、指示）。','動詞て形 + ください','ここに名前を書いてください。','請在這裡寫名字。','ちょっと待っ＿＿ください。（請稍等）','て',['た','で','に']),
+G('〜てから','做完～之後，再做～（強調先後順序）。','動詞て形 + から','手を洗ってから、ご飯を食べます。','洗完手再吃飯。','宿題をし＿＿から、遊びます。（寫完作業再玩）','て',['た','る','ない']),
+G('〜て、〜（動作連接）','依序連接多個動作：做～然後～。','動詞て形、動詞','朝起きて、シャワーを浴びます。','早上起床後淋浴。','駅まで歩い＿＿、電車に乗ります。（走到車站，然後搭電車）','て',['た','る','で']),
+G('どうやって','怎麼（問方法）。','どうやって + 動詞','駅までどうやって行きますか。','要怎麼去車站？','空港まで＿＿行きますか。（怎麼去機場？）','どうやって',['どこ','どれ','だれ']),
+G('〜ぐらい／くらい','大約（數量、時間長度）。時刻要用「ごろ」。','數量 + ぐらい','駅まで十分ぐらいです。','到車站大約十分鐘。','家から駅まで五分＿＿かかります。（從家到車站大約五分鐘）','ぐらい',['ごろ','ずつ','だけ']),
+G('〜が、〜（逆接）','雖然～但是～。','句子 + が、句子','日本語は難しいですが、面白いです。','日語很難，但是很有趣。','高いです＿＿、おいしいです。（雖然貴，但是好吃）','が',['から','と','も'])
+],
+8: [
+G('〜ています（進行中）','正在～。','動詞て形 + いる','今、雨が降っています。','現在正在下雨。','弟は今テレビを見て＿＿。（弟弟正在看電視）','います',['あります','おきます','みます']),
+G('〜ています（狀態）','表示結果持續的狀態：住在、已婚、在～工作、知道。','動詞て形 + いる','東京に住んでいます。','住在東京。','姉は結婚して＿＿。（姊姊已婚）','います',['あります','しまいます','おきます']),
+G('〜てはいけません','不可以～（禁止）。','動詞て形 + はいけません','ここでたばこを吸ってはいけません。','這裡不可以抽菸。','ここで写真を撮って＿＿いけません。（這裡不可以拍照）','は',['も','が','を']),
+G('ない形的變化','一類：う段→あ段＋ない（う→わ）；二類：去る＋ない；する→しない、来る→こない。','行く→行かない、食べる→食べない','今日は会社に行かない。','今天不去公司。','「飲む」的ない形是？','飲まない',['飲みない','飲むない','飲いない']),
+G('〜ないでください','請不要～。','動詞ない形 + でください','ここに車を止めないでください。','請不要在這裡停車。','写真を撮ら＿＿ください。（請不要拍照）','ないで',['なくて','ない','なければ']),
+G('た形的變化','和て形變化相同，把て換成た。','食べる→食べた、行く→行った、読む→読んだ','昨日、本を読んだ。','昨天看了書。','「行く」的た形是？','行った',['行いた','行きた','行んだ']),
+G('〜たことがある','曾經～過（經驗）。','動詞た形 + ことがある','富士山に登ったことがあります。','我爬過富士山。','すしを食べた＿＿があります。（吃過壽司）','こと',['もの','ところ','とき']),
+G('〜たり〜たりする','又～又～（列舉幾個代表性動作）。','動詞た形 + り、動詞た形 + り + する','休みの日は、本を読んだり、映画を見たりします。','假日會看看書、看看電影。','掃除をし＿＿、洗濯をしたりします。（打掃、洗衣服之類的）','たり',['たら','ても','て']),
+G('もう〜ました／まだ〜ていません','已經～了／還沒～。','もう + 過去式；まだ + 〜ていません','もう昼ご飯を食べましたか。─いいえ、まだ食べていません。','已經吃午餐了嗎？—還沒吃。','宿題は終わりましたか。─いいえ、＿＿です。（還沒）','まだ',['もう','すぐ','よく']),
+G('〜前に','在～之前。','動詞辭書形／名詞の + 前に','寝る前に、歯を磨きます。','睡前刷牙。','ご飯を食べる＿＿、手を洗います。（吃飯前洗手）','前に',['後で','から','ながら'])
+],
+9: [
+G('普通形','朋友之間的口語，也是很多文法的接續基礎。','辭書形・ない形・た形・なかった形','明日、学校に行く？─うん、行く。','明天要去學校嗎？—嗯，要去。','「食べませんでした」的普通形是？','食べなかった',['食べないた','食べなくた','食べたない']),
+G('〜から（理由）','因為～，所以～。','句子 + から、句子','時間がないから、タクシーで行きます。','因為沒時間，所以搭計程車去。','雨が降っている＿＿、出かけません。（因為在下雨所以不出門）','から',['まで','が','と']),
+G('〜くなる／〜になる','變得～。','い形容詞去い + くなる；な形容詞・名詞 + になる','寒くなりました。','變冷了。','部屋がきれい＿＿なりました。（房間變乾淨了）','に',['く','な','で']),
+G('〜く／〜に（副詞）','形容詞變副詞，用來修飾動詞。','い形容詞去い + く；な形容詞 + に','静かに話してください。','請安靜地說話。','字を大き＿＿書いてください。（請把字寫大一點）','く',['に','な','い']),
+G('〜でしょう','大概～吧（推測），也用在天氣預報。','普通形 + でしょう','明日は晴れるでしょう。','明天大概會放晴吧。','明日は雨が降る＿＿。（明天大概會下雨吧）','でしょう',['ましょう','ません','ください']),
+G('〜と思います','我認為～、我覺得～。','普通形 + と思います','日本語は面白いと思います。','我覺得日語很有趣。','彼は来ない＿＿思います。（我想他不會來）','と',['を','に','が']),
+G('〜と言いました','說了～（引用別人的話）。','「話」／普通形 + と言う','先生は「明日は休みです」と言いました。','老師說：「明天放假」。','田中さんは明日来る＿＿言いました。（田中先生說明天會來）','と',['を','に','で']),
+G('〜の（代替名詞）','用「の」代替前面提過或彼此都知道的東西。','形容詞・動詞 + の','もっと安いのはありますか。','有更便宜的嗎？','この赤い＿＿をください。（請給我這個紅色的）','の',['な','も','が']),
+G('〜よ／〜ね','句尾語氣：よ＝告訴對方不知道的事；ね＝尋求共鳴、確認。','句子 + よ／ね','あ、バスが来ましたよ。','啊，公車來了喔。','あ、財布が落ちました＿＿。（提醒對方：你錢包掉了喔！）','よ',['か','の','を']),
+G('疑問詞＋も＋否定','什麼都不～／哪裡都不～／誰都不～。','何も・どこも・だれも + 否定','昨日は何も食べませんでした。','昨天什麼都沒吃。','日曜日はどこ＿＿行きませんでした。（星期日哪裡都沒去）','も',['か','が','に']),
+G('疑問詞＋か','某個～（何か＝某樣東西、だれか＝某人、どこか＝某處）。','何か・だれか・どこか','何か飲みませんか。','要不要喝點什麼？','おなかが空きました。＿＿食べたいです。（想吃點什麼）','何か',['何も','何で','何を'])
+],
+10: [
+G('〜くて／〜で（形容詞連接）','又～又～。い形容詞：い→くて；な形容詞、名詞：+で。','い形容詞去い + くて；な形容詞 + で','この部屋は広くて明るいです。','這房間又寬又亮。','彼女はきれい＿＿親切です。（她又漂亮又親切）','で',['くて','て','な']),
+G('〜が好き／上手／分かる','表示好惡、能力、理解的對象用が，不用を。','名詞 + が + 好き・上手・分かる','私は音楽が好きです。','我喜歡音樂。','姉は料理＿＿上手です。（姊姊很會做菜）','が',['を','に','で']),
+G('〜に会う／〜に聞く','動作的對象是人時用に。','人 + に + 会う・聞く・電話する','駅で友達に会いました。','在車站遇到朋友。','先生＿＿聞いてください。（請問老師）','に',['を','で','が']),
+G('あげる／もらう／くれる','授受動詞：給別人用あげる；收到用もらう；別人給我用くれる。','AはBに物をあげる／BはAに物をもらう','友達が私に本をくれました。','朋友給了我書。','友達が私にお土産を＿＿。（朋友給了我伴手禮）','くれました',['あげました','もらいました','やりました']),
+G('〜のが好き／〜のが上手','把動作變成名詞：喜歡做～、擅長做～。','動詞辭書形 + のが好き・上手・下手','私は歌うのが好きです。','我喜歡唱歌。','絵をかく＿＿が下手です。（不擅長畫畫）','の',['を','に','で']),
+G('〜だけ','只有～、僅僅～。','名詞・數量 + だけ','一つだけください。','請給我一個就好。','日本語＿＿話せます。（只會說日語）','だけ',['しか','も','まで']),
+G('〜ずつ','各～、每～（平均分配）。','數量 + ずつ','毎日少しずつ勉強します。','每天一點一點地學習。','一人二つ＿＿取ってください。（每人各拿兩個）','ずつ',['だけ','ぐらい','ごろ']),
+G('〜に〜回','頻率：每（期間）～次。','期間 + に + 次數','一週間に三回、ジムに行きます。','一週去健身房三次。','一日＿＿三回、薬を飲みます。（一天吃三次藥）','に',['で','を','が']),
+G('もう＋數量','再～（追加）。','もう + 一度・一つ・少し','もう一度言ってください。','請再說一次。','＿＿少しゆっくり話してください。（請再說慢一點）','もう',['まだ','また','よく']),
+G('〜て（原因）','因為～（多用於情緒、狀態的原因）。','動詞て形・形容詞くて、句子','手紙をもらって、うれしかったです。','收到信很開心。','ニュースを聞い＿＿、びっくりしました。（聽到新聞嚇了一跳）','て',['た','たら','ても'])
+],
+11: [
+G('〜ましょうか（提議幫忙）','我來幫你～吧？','動詞ます形去ます + ましょうか','荷物を持ちましょうか。','我幫你拿行李吧？','窓を開け＿＿か。（我來開窗吧？）','ましょう',['ません','ます','ました']),
+G('〜があります（舉行、持有）','「有～」也用在活動、考試、預定。','名詞 + が + あります','明日、テストがあります。','明天有考試。','今晩、パーティーが＿＿。（今晚有派對）','あります',['います','します','です']),
+G('〜は〜が〜','主題 + 描述它的某個部分或特徵。','A は B が + 形容詞','東京は人が多いです。','東京人很多。','兄は背＿＿高いです。（哥哥個子高）','が',['を','で','に']),
+G('〜でも（舉例）','～之類的、～什麼的（委婉提議）。','名詞 + でも','お茶でも飲みませんか。','要不要喝個茶什麼的？','映画＿＿見に行きませんか。（要不要去看個電影？）','でも',['ても','だけ','しか']),
+G('數量詞的位置','數量詞放在動詞前面，量詞要配合東西的形狀。','名詞 + を + 數量 + 動詞','切手を五枚ください。','請給我五張郵票。','ビールを二＿＿ください。（請給我兩瓶啤酒）','本',['枚','冊','匹']),
+G('〜かかります','花費（時間、金錢）。','時間・金額 + かかります','駅から家まで歩いて十分かかります。','從車站走回家要十分鐘。','東京から大阪まで新幹線で二時間半＿＿。（要花兩個半小時）','かかります',['あります','います','します']),
+G('〜にします','決定要～（點餐時很常用）。','名詞 + にします','私はコーヒーにします。','我要咖啡。','じゃ、このラーメン＿＿します。（那我要這碗拉麵）','に',['を','が','で']),
+G('〜の中で〜がいちばん','在～之中，～最～。','範圍 + の中で + A + がいちばん','果物の中でりんごがいちばん好きです。','水果之中最喜歡蘋果。','スポーツの＿＿でサッカーがいちばん好きです。（運動之中最喜歡足球）','中',['間','前','上']),
+G('〜んです','說明理由或詢問原因（口語）。','普通形 + んです（名詞・な形容詞 + なんです）','どうして遅れたんですか。─電車が止まったんです。','為什麼遲到了？—因為電車停了。','どうして食べないん＿＿か。（為什麼不吃呢？）','です',['ます','ません','ましょう'])
+],
+12: [
+G('可能形','動詞的「會～、能～」。一類：う段→え段＋る；二類：去る＋られる；する→できる、来る→来られる。','書く→書ける、食べる→食べられる','この漢字が読めます。','我會讀這個漢字。','この漢字が読＿＿ます。（會讀這個漢字）','め',['み','ま','も']),
+G('〜ことができる','能夠～、可以～（比可能形正式）。','動詞辭書形 + ことができる','漢字を書くことができます。','我會寫漢字。','漢字を書く＿＿ができます。（會寫漢字）','こと',['もの','ところ','の']),
+G('〜ようになる','變得會～、開始～（能力或習慣的變化）。','動詞辭書形・可能形 + ようになる','日本語が話せるようになりました。','變得會說日語了。','日本語が話せる＿＿なりました。（變得會說日語了）','ように',['ことに','ために','ので']),
+G('〜ようと思う','打算～（說話者的意志）。','動詞意向形 + と思う','来年、日本へ留学しようと思います。','我打算明年去日本留學。','来年、日本へ留学し＿＿と思います。（打算明年去日本留學）','よう',['たい','ます','ない']),
+G('〜つもりだ','打算～（已經決定的計畫）。','動詞辭書形・ない形 + つもりだ','夏休みに北海道へ行くつもりです。','暑假打算去北海道。','今年はたばこを吸わない＿＿です。（今年打算不抽菸）','つもり',['はず','そう','よう']),
+G('〜予定だ','預定～（行程表上的安排）。','動詞辭書形・名詞の + 予定だ','会議は三時に始まる予定です。','會議預定三點開始。','来週、京都に行く＿＿です。（預定下週去京都）','予定',['はず','ところ','ばかり']),
+G('〜てみる','試著做～。','動詞て形 + みる','この料理を食べてみたいです。','想試吃看看這道菜。','この服を着て＿＿もいいですか。（可以試穿這件衣服嗎？）','み',['あげて','おいて','しまって']),
+G('〜ことにする','（自己）決定要～。','動詞辭書形・ない形 + ことにする','来月から日本語を習うことにしました。','我決定從下個月開始學日語。','毎日運動する＿＿しました。（我決定每天運動）','ことに',['ように','ために','そうに'])
+],
+13: [
+G('〜てある','（某人刻意做的）結果狀態還保留著。多用他動詞。','他動詞て形 + ある','資料は準備してあります。','資料已經準備好了。','窓が開けて＿＿。（窗戶（被人）打開著）','あります',['います','おきます','しまいます']),
+G('〜ておく','事先做好～、（為了之後）先～。','動詞て形 + おく','旅行の前に、ホテルを予約しておきます。','旅行前先訂好飯店。','旅行の前に、荷物を準備して＿＿ます。（旅行前先把行李準備好）','おき',['あり','い','み']),
+G('〜てしまう','①完全做完 ②不小心～（遺憾）。口語縮成「ちゃう」。','動詞て形 + しまう','宿題を忘れてしまいました。','（糟糕）作業忘了帶。','電車に傘を忘れて＿＿ました。（不小心把傘忘在電車上了）','しまい',['おき','あり','み']),
+G('〜てくる','①動作朝說話者靠近 ②變化開始出現、逐漸～至今。','動詞て形 + くる','雨が降ってきました。','開始下雨了。','急に寒くなって＿＿ました。（突然開始變冷了）','き',['いき','おき','み']),
+G('〜ていく','①動作離開說話者 ②從現在起持續下去。','動詞て形 + いく','これからも日本語を勉強していきます。','今後也會繼續學日語。','これからも日本語を勉強して＿＿ます。（今後也會持續學下去）','いき',['き','おき','しまい']),
+G('〜ていた','過去某時正在～／過去的持續狀態。','動詞て形 + いた','電話をかけたとき、彼は寝ていました。','打電話的時候，他正在睡覺。','電話をかけたとき、彼は寝て＿＿ました。（那時他正在睡覺）','い',['あり','おき','しまい']),
+G('〜てばかりいる','老是只做～（帶批評語氣）。','動詞て形 + ばかりいる','彼はゲームをしてばかりいます。','他老是只顧著打電動。','弟は寝て＿＿います。（弟弟老是在睡覺）','ばかり',['だけ','しか','まで']),
+G('〜始める／〜出す','開始～。「出す」帶有突然的感覺。','動詞ます形去ます + 始める／出す','急に泣き出しました。','突然哭了出來。','赤ちゃんが急に泣き＿＿ました。（嬰兒突然哭了起來）','出し',['終わり','続け','すぎ'])
+],
+14: [
+G('〜続ける','持續～、一直～。','動詞ます形去ます + 続ける','三時間歩き続けました。','連續走了三個小時。','毎日日本語を勉強し＿＿ています。（每天持續學習日語）','続け',['始め','終わり','出し']),
+G('〜終わる','～完（動作結束）。','動詞ます形去ます + 終わる','レポートを書き終わりました。','報告寫完了。','この本はもう読み＿＿ました。（這本書已經讀完了）','終わり',['始め','続け','出し']),
+G('〜ところ','動作的時間點：辭書形＝正要～；ている＝正在～；た形＝剛～完。','動詞辭書形／ている／た形 + ところだ','今、出かけるところです。','現在正要出門。','今、ご飯を食べている＿＿です。（現在正在吃飯）','ところ',['ばかり','はず','つもり']),
+G('〜後で','做完～之後。','動詞た形／名詞の + 後で','食事した後で、薬を飲みます。','吃完飯後吃藥。','授業が終わった＿＿、図書館へ行きます。（下課後去圖書館）','後で',['前に','間','ながら']),
+G('〜までに','在～之前（期限）。「まで」是持續到～。','時間・動詞辭書形 + までに','明日までに宿題を出してください。','請在明天之前交作業。','金曜日＿＿レポートを出してください。（請在星期五前交報告）','までに',['まで','から','ごろ']),
+G('〜間／〜間に','～的期間（間：整段時間都在做；間に：期間中的某個時候）。','動詞ている形・名詞の + 間','私が寝ている間に、雨が降りました。','我睡覺的時候下了雨。','夏休みの＿＿、ずっと国に帰っていました。（暑假期間一直待在老家）','間',['まで','とき','前']),
+G('〜とき','～的時候。前面是辭書形＝動作之前；た形＝動作之後。','普通形・な形容詞な・名詞の + とき','日本に行ったとき、寿司を食べました。','去日本的時候吃了壽司。','子供の＿＿、よく川で遊びました。（小時候常在河邊玩）','とき',['あと','まえ','ところ']),
+G('〜ながら','一邊～一邊～（同一人同時做兩件事）。','動詞ます形去ます + ながら','音楽を聞きながら勉強します。','邊聽音樂邊讀書。','テレビを見＿＿ご飯を食べます。（邊看電視邊吃飯）','ながら',['てから','たり','ので'])
+],
+15: [
+G('〜ば（條件形）','如果～就～（假設條件）。一類：う段→え段＋ば；二類：去る＋れば；い形容詞：〜ければ。','動詞ば形・い形容詞ければ','早く起きれば、電車に間に合います。','如果早起，就趕得上電車。','早く起き＿＿、電車に間に合います。（如果早起就趕得上）','れば',['たら','ても','なら']),
+G('〜たら','如果～的話／～之後（已確定會發生的事）。口語最常用。','動詞・形容詞た形 + ら','雨が降ったら、行きません。','如果下雨就不去。','駅に着い＿＿、電話してください。（到車站後請打電話給我）','たら',['ても','ば','なら']),
+G('〜と（必然）','一～就～（自然、必然的結果、機器操作、問路）。','動詞辭書形 + と','春になると、花が咲きます。','一到春天花就開。','このボタンを押す＿＿、お湯が出ます。（一按這個按鈕就會出熱水）','と',['ので','たら','ても']),
+G('〜なら','如果是～的話（針對對方說的話給建議）。','名詞・普通形 + なら','日本に行くなら、京都がおすすめです。','如果要去日本，推薦京都。','カメラを買う＿＿、この店が安いですよ。（如果要買相機，這家店便宜喔）','なら',['ても','から','けど']),
+G('〜ても','即使～也～（逆接條件）。','動詞て形・い形容詞くて + も；な形容詞・名詞 + でも','雨が降っても、行きます。','即使下雨也要去。','いくら勉強し＿＿、覚えられません。（再怎麼讀也記不住）','ても',['たら','ので','ば']),
+G('〜ばよかった','早知道就～（後悔）。','動詞ば形 + よかった','もっと早く来ればよかった。','早知道就早點來。','傘を持ってくれ＿＿よかった。（早知道就帶傘來）','ば',['たら','て','と']),
+G('〜場合は','在～的情況下（多用於規則、說明）。','普通形・名詞の + 場合は','雨の場合は、中止します。','如果下雨就取消。','遅れる＿＿、電話してください。（如果會遲到，請打電話）','場合は',['ところは','ためは','ときに']),
+G('〜かどうか','是否～（用在不確定的事）。','普通形 + かどうか','彼が来るかどうかわかりません。','不知道他是否會來。','明日晴れる＿＿わかりません。（不知道明天會不會放晴）','かどうか',['かもしれない','ことが','ように'])
+],
+16: [
+G('〜なければならない','必須～、不～不行（義務）。口語縮成「なきゃ」。','動詞ない形去い + ければならない','レポートを明日までに出さなければなりません。','報告必須在明天前交。','毎朝六時に起き＿＿なりません。（每天早上必須六點起床）','なければ',['なくても','ないで','なくて']),
+G('〜なくてもいい','不～也可以、不需要～。','動詞ない形去い + くてもいい','今日は行かなくてもいいです。','今天不去也可以。','明日は来＿＿いいですよ。（明天不來也沒關係）','なくても',['なければ','ないで','ても']),
+G('〜てもいい','可以～（許可）。問句「〜てもいいですか」是請求許可。','動詞て形 + もいい','ここに座ってもいいですか。','可以坐這裡嗎？','窓を開け＿＿いいですか。（可以開窗嗎？）','ても',['たら','ては','ながら']),
+G('〜なさい','命令、指示（父母對孩子、老師對學生、考題指示）。','動詞ます形去ます + なさい','早く寝なさい。','快去睡覺。','正しい答えを選び＿＿。（請選出正確答案）','なさい',['ください','ましょう','ません']),
+G('〜な（禁止）','不准～（強烈禁止，用於標語或男性口語）。','動詞辭書形 + な','そこに入るな。','不准進去那裡。','危ない！触る＿＿！（危險！不准碰！）','な',['ね','よ','の']),
+G('〜なくちゃ／〜なきゃ','不～不行（なければならない的口語）。','動詞ない形去い + くちゃ・きゃ','もう帰らなきゃ。','我得回去了。','明日はテストだから、勉強し＿＿。（明天考試，得讀書了）','なきゃ',['ないで','なくても','ないと思う']),
+G('〜必要がある','有必要～。','動詞辭書形 + 必要がある','早く準備する必要があります。','有必要早點準備。','ビザを申請する＿＿があります。（有必要申請簽證）','必要',['予定','つもり','はず']),
+G('〜ないで','不～（就做～）、沒有～而～。','動詞ない形 + で','朝ご飯を食べないで学校へ行きました。','沒吃早餐就去學校了。','傘を持た＿＿出かけました。（沒帶傘就出門了）','ないで',['なくて','なければ','なくても'])
+],
+17: [
+G('〜てあげる／〜てくれる／〜てもらう','為別人做／別人為我做／請別人為我做（受恩惠）。','動詞て形 + あげる・くれる・もらう','友達が宿題を手伝ってくれました。','朋友幫我寫作業。','友達が宿題を手伝って＿＿ました。（朋友幫了我）','くれ',['あげ','もらい','やり']),
+G('〜てもらいたい','希望（對方）為我做～。','動詞て形 + もらいたい','先生に説明してもらいたいです。','希望老師幫我說明。','先生にもう一度説明して＿＿です。（希望老師再說明一次）','もらいたい',['あげたい','くれたい','ほしいたい']),
+G('〜てほしい','希望（別人）做～。','動詞て形 + ほしい','手伝ってほしいです。','希望你能幫忙。','もっとゆっくり話して＿＿です。（希望你說慢一點）','ほしい',['たい','もらう','くれる']),
+G('〜てくれてありがとう','謝謝你為我～。','動詞て形 + くれてありがとう','手伝ってくれてありがとうございます。','謝謝你幫我。','来て＿＿ありがとう。（謝謝你來）','くれて',['あげて','もらって','おいて']),
+G('〜てよかった','幸好～、～真是太好了。','動詞て形 + よかった','日本語を勉強してよかったです。','幸好有學日語。','日本に来て＿＿です。（來日本真是太好了）','よかった',['ほしい','しまった','みた']),
+G('〜させてください','請讓我～（禮貌地請求許可）。','動詞使役形て形 + ください','私にやらせてください。','請讓我來做。','今日は早く帰ら＿＿ください。（今天請讓我早點回去）','せて',['れて','させられて','て']),
+G('〜てすみません','為～道歉。','動詞て形 + すみません','遅れてすみません。','抱歉遲到了。','返事が遅くなって＿＿。（抱歉這麼晚回覆）','すみません',['ありがとう','よかった','ください'])
+],
+18: [
+G('〜そうだ（傳聞）','聽說～（引述得到的資訊）。常和「〜によると」一起用。','普通形 + そうだ','天気予報によると、明日は雨だそうです。','根據天氣預報，聽說明天會下雨。','ニュースによると、明日は雨だ＿＿です。（聽說明天會下雨）','そう',['よう','らしい','みたい']),
+G('〜そうだ（樣態）','看起來好像～（根據外觀判斷）。注意「いい→よさそう」。','動詞ます形去ます・形容詞去い + そうだ','このケーキはおいしそうです。','這個蛋糕看起來很好吃。','雨が降り＿＿です。（看起來好像要下雨）','そう',['よう','らしい','はず']),
+G('〜らしい','好像～、聽說～（有某些根據的推測）。','普通形 + らしい','あの店のラーメンはおいしいらしいです。','那家店的拉麵好像很好吃。','田中さんは来月結婚する＿＿です。（聽說田中先生下個月要結婚）','らしい',['そう','ように','はず']),
+G('〜ようだ','好像～（根據自己的觀察判斷）。','普通形・な形容詞な・名詞の + ようだ','彼は元気がないようです。','他好像沒什麼精神。','だれもいない＿＿です。（好像沒有人在）','よう',['そう','らしい','みたい']),
+G('〜みたい','「ようだ」的口語版：好像～、像～一樣。','普通形・名詞 + みたい','今日は夏みたいに暑いです。','今天熱得像夏天一樣。','今日は夏＿＿に暑いです。（今天熱得像夏天）','みたい',['よう','そう','らしい']),
+G('〜はずだ','照理說應該～（根據理由推斷）。','普通形・な形容詞な・名詞の + はずだ','彼はもう着いているはずです。','他應該已經到了。','荷物は明日届く＿＿です。（行李明天應該會到）','はず',['つもり','ところ','ため']),
+G('〜はずがない','不可能～。','普通形 + はずがない','彼が知らないはずがありません。','他不可能不知道。','あんなにまじめな人が嘘をつく＿＿がありません。（那麼認真的人不可能說謊）','はず',['こと','もの','わけ']),
+G('〜かもしれない','也許～、說不定～。','普通形（な形容詞・名詞直接接）+ かもしれない','明日は雨かもしれません。','明天說不定會下雨。','明日は雨＿＿しれません。（明天說不定會下雨）','かも',['でも','だけ','しか'])
+],
+19: [
+G('〜より','比起～（比較的基準）。','名詞 + より','今日は昨日より寒いです。','今天比昨天冷。','東京は大阪＿＿人が多いです。（東京人比大阪多）','より',['ほど','から','まで']),
+G('〜ほど〜ない','沒有～那麼～。','名詞 + ほど + 否定','今日は昨日ほど寒くないです。','今天沒有昨天那麼冷。','私の部屋はあなたの部屋＿＿広くないです。（我的房間沒有你的那麼大）','ほど',['より','まで','だけ']),
+G('〜すぎる','太～、過度～。','動詞ます形去ます・形容詞去い + すぎる','この料理は辛すぎます。','這道菜太辣了。','昨日は飲み＿＿ました。（昨天喝太多了）','すぎ',['続け','終わり','始め']),
+G('〜ために','①為了～（目的） ②因為～（原因）。','動詞辭書形・名詞の + ために','健康のために、運動しています。','為了健康而運動。','留学する＿＿、お金を貯めています。（為了留學在存錢）','ために',['ように','ので','のに']),
+G('〜のに（逆接）','明明～卻～（帶不滿或意外）。','普通形・な形容詞な + のに','勉強したのに、テストは悪かったです。','明明有讀書，考試卻考不好。','約束した＿＿、彼は来ませんでした。（明明約好了，他卻沒來）','のに',['ので','から','ために']),
+G('〜ので','因為～（比から客觀、禮貌）。','普通形・な形容詞な・名詞な + ので','頭が痛いので、早く帰ります。','因為頭痛，所以早點回去。','熱がある＿＿、今日は休みます。（因為發燒，今天請假）','ので',['のに','けど','でも']),
+G('〜し、〜し','又～又～（列舉多個理由）。','普通形 + し','この店は安いし、おいしいし、よく来ます。','這家店又便宜又好吃，所以常來。','この部屋は駅から近い＿＿、広いし、いいですね。（又近又大）','し',['て','が','と']),
+G('〜にくい／〜やすい','很難～／很容易～。','動詞ます形去ます + にくい・やすい','この漢字は覚えやすいです。','這個漢字很好記。','この靴は歩き＿＿です。（這雙鞋很好走）','やすい',['にくい','たい','そう'])
+],
+20: [
+G('〜こと（名詞化）','把動作變成名詞「做～這件事」。','動詞辭書形 + こと','私の趣味は本を読むことです。','我的興趣是讀書。','私の夢は世界を旅行する＿＿です。（我的夢想是環遊世界）','こと',['もの','ところ','ため']),
+G('〜ということ','所謂～、～這件事（說明內容）。','普通形 + ということ','彼が来るということを聞きました。','我聽說了他要來這件事。','明日テストがある＿＿を知っていますか。（你知道明天有考試這件事嗎？）','ということ',['ところ','ように','ばかり']),
+G('〜とか〜とか','～啦～啦（口語的列舉）。','名詞・普通形 + とか','休みの日は、映画とか買い物とかに行きます。','假日會去看看電影、購物之類的。','果物はりんご＿＿みかんとかが好きです。（水果喜歡蘋果啦橘子啦）','とか',['など','でも','ほど']),
+G('〜など','～等等。','名詞 + など','りんごやバナナなどが好きです。','喜歡蘋果、香蕉等等。','京都や奈良＿＿に行きました。（去了京都、奈良等地）','など',['とか','ばかり','だけ']),
+G('〜ばかり','①た形＋ばかり：剛～不久 ②名詞＋ばかり：全是～、淨是～。','動詞た形 + ばかり／名詞 + ばかり','彼はさっき来たばかりです。','他剛剛才來。','日本に来た＿＿で、まだ友達がいません。（剛來日本，還沒有朋友）','ばかり',['ところ','はず','まま']),
+G('〜しか〜ない','只有～（強調少），後面一定接否定。','名詞 + しか + 否定','お金が少ししかありません。','錢只剩一點點。','財布に千円＿＿ありません。（錢包裡只有一千日圓）','しか',['だけ','も','ばかり']),
+G('〜だけで','光是～就～。','動詞辭書形・名詞 + だけで','見るだけで、おいしいとわかります。','光看就知道很好吃。','考える＿＿、楽しくなります。（光是想就覺得開心）','だけで',['しか','ばかりで','までに']),
+G('〜方（かた）','～的方法。','動詞ます形去ます + 方','この漢字の書き方を教えてください。','請教我這個漢字的寫法。','切符の買い＿＿がわかりません。（不知道怎麼買票）','方',['物','事','所'])
+],
+21: [
+G('受身形（被動）','被～。一類：う段→あ段＋れる；二類：去る＋られる；する→される、来る→来られる。','A は B に + 動詞受身形','この本は多くの人に読まれています。','這本書被很多人閱讀。','私は先生に褒め＿＿ました。（我被老師稱讚了）','られ',['させ','させられ','れ']),
+G('使役形','讓～、叫～做（強迫或允許）。一類：う段→あ段＋せる；二類：去る＋させる；する→させる。','A は B に + 動詞使役形','母は子供に野菜を食べさせます。','媽媽讓孩子吃蔬菜。','母は弟に部屋を掃除＿＿ました。（媽媽叫弟弟打掃房間）','させ',['され','させられ','でき']),
+G('使役受身形','被迫～（不情願地做）。','動詞使役受身形（〜させられる）','毎日残業させられます。','每天被迫加班。','子供のころ、母に野菜を食べ＿＿ました。（小時候被媽媽逼著吃蔬菜）','させられ',['させ','られ','たがり']),
+G('〜ように言う','叫（別人）要～／不要～（間接引用命令）。','動詞辭書形・ない形 + ように言う','先生に早く来るように言われました。','老師叫我早點來。','医者にお酒を飲まない＿＿言われました。（醫生叫我不要喝酒）','ように',['ために','ことに','そうに']),
+G('〜ようにする','努力做到～、盡量～（養成習慣）。','動詞辭書形・ない形 + ようにする','毎日運動するようにしています。','我盡量每天運動。','甘い物を食べない＿＿しています。（盡量不吃甜食）','ように',['ことに','ために','そうに']),
+G('〜ことになる','（非自己決定的）決定了～、結果變成～。','動詞辭書形・ない形 + ことになる','来年、東京に転勤することになりました。','明年確定要調職到東京了。','来月から大阪の支店で働く＿＿なりました。（確定下個月起在大阪分店工作）','ことに',['ように','ために','そうに']),
+G('〜がする','感覺到（聲音、味道、氣味、感覺）。','名詞 + がする','いい匂いがします。','有很香的味道。','隣の部屋から変な音＿＿します。（隔壁房間傳來奇怪的聲音）','が',['を','に','で']),
+G('〜がる','（第三人稱）顯得～、覺得～。','形容詞去い・な形容詞 + がる；〜たい→〜たがる','子供が寒がっています。','小孩覺得很冷的樣子。','弟が新しいゲームをほし＿＿っています。（弟弟很想要新遊戲）','が',['そう','よう','み'])
+],
+22: [
+G('尊敬語：お〜になる','把對方（長輩）的動作抬高。','お + 動詞ます形去ます + になる','先生がお話しになります。','老師要說話了。','社長はもうお帰り＿＿なりました。（社長已經回去了）','に',['を','で','が']),
+G('特殊尊敬語','いらっしゃる＝いる・行く・来る；なさる＝する；おっしゃる＝言う；召し上がる＝食べる・飲む；ご覧になる＝見る。','特殊動詞','先生はいらっしゃいますか。','老師在嗎？','先生は何と＿＿ましたか。（老師說了什麼？）','おっしゃい',['申し','いたし','参り']),
+G('お〜ください','請（您）～（尊敬的請求）。','お + 動詞ます形去ます + ください','少々お待ちください。','請稍候。','こちらにお座り＿＿。（請坐這邊）','ください',['します','なります','いたします']),
+G('〜てくださる／〜ていただく','（長輩）為我做～。「くれる」「もらう」的敬語。','動詞て形 + くださる・いただく','先生が説明してくださいました。','老師為我說明了。','先生に作文を直して＿＿ました。（請老師幫我修改了作文）','いただき',['くださり','あげ','さしあげ']),
+G('〜ていただけませんか','可以請您～嗎？（非常禮貌的請求）','動詞て形 + いただけませんか','この漢字の読み方を教えていただけませんか。','可以請您教我這個漢字的讀法嗎？','もう一度説明して＿＿ませんか。（可以請您再說明一次嗎？）','いただけ',['ください','くれ','いたし']),
+G('謙讓語：お〜する','把自己的動作放低，表示對對方的尊敬。','お + 動詞ます形去ます + する','私がお持ちします。','我來幫您拿。','荷物は私がお持ち＿＿。（行李我來幫您拿）','します',['になります','ください','なさい']),
+G('特殊謙讓語・鄭重語','参る＝行く・来る；申す＝言う；いたす＝する；おる＝いる；ございます＝ある。','特殊動詞','台湾から参りました。王と申します。','我從台灣來，敝姓王。','私は王と＿＿。（我姓王（謙讓））','申します',['おっしゃいます','言われます','なさいます'])
+],
+23: [
+G('全然〜ない','完全不～。','全然 + 否定','彼のことは全然知りません。','我完全不認識他。','この映画は＿＿面白くなかったです。（這部電影一點都不好看）','全然',['とても','よく','もっと']),
+G('あまり〜ない','不太～。','あまり + 否定','この店はあまり有名ではありません。','這家店不太有名。','今日は＿＿寒くないです。（今天不太冷）','あまり',['とても','たくさん','ずっと']),
+G('そんなに','那麼～（多搭配否定或驚訝）。','そんなに + 形容詞・動詞','そんなに心配しなくていいですよ。','不用那麼擔心喔。','＿＿急がなくても大丈夫です。（不用那麼急也沒關係）','そんなに',['こんなに','どんなに','あんなに']),
+G('それでも','即使如此～（前後句逆接）。','句子。それでも + 句子','難しいです。それでも頑張ります。','很難。即使如此還是會努力。','雨が強くなりました。＿＿、試合は続きました。（雨變大了，即使如此比賽仍繼續）','それでも',['それで','だから','それに']),
+G('〜おきに','每隔～。','時間・距離 + おきに','一時間おきに、薬を飲みます。','每隔一小時吃一次藥。','バスは十分＿＿来ます。（公車每十分鐘一班）','おきに',['ずつ','ごろ','まで']),
+G('〜ごろ','～左右（大概的時間點）。時間長度要用「ぐらい」。','時刻 + ごろ','九時ごろ、家を出ます。','九點左右出門。','毎晩十一時＿＿寝ます。（每晚十一點左右睡覺）','ごろ',['ぐらい','ずつ','おきに']),
+G('急に','突然。','急に + 動詞','急に雨が降ってきました。','突然下起雨來了。','＿＿電気が消えました。（電燈突然熄了）','急に',['ゆっくり','だんだん','そろそろ']),
+G('〜かな／〜かしら','～呢？（自言自語的疑問）。かしら多為女性用。','普通形 + かな／かしら','明日晴れるかな。','明天會放晴嗎？','彼、来る＿＿。（他會來嗎（自言自語））','かな',['かね','のに','ので']),
+G('〜じゃないか／〜んじゃない？','不是～嗎？（確認或徵求同意）','普通形 + じゃないか','これでいいんじゃないですか。','這樣不就好了嗎？','この服、大きすぎるん＿＿？（這件衣服是不是太大了？）','じゃない',['ない','だった','らしい'])
+],
+24: [
+G('〜ように（目的）','為了能～（後面接非意志的狀態，如可能形、ない形）。','動詞辭書形・可能形・ない形 + ように','忘れないように、メモします。','為了不忘記，做筆記。','後ろの人にも聞こえる＿＿、大きい声で話してください。（為了讓後面的人也聽得到）','ように',['ために','ことに','そうに']),
+G('〜のに（用途）','用於～、在～方面。','動詞辭書形 + のに','この箱は荷物を送るのに便利です。','這個箱子寄東西很方便。','このかばんは旅行に行く＿＿ちょうどいいです。（這個包包用來旅行剛好）','のに',['ので','ために','から']),
+G('〜たらどうですか','～怎麼樣？（建議）','動詞た形 + らどうですか','薬を飲んだらどうですか。','吃個藥怎麼樣？','先生に聞い＿＿どうですか。（問問老師如何？）','たら',['ても','ば','と']),
+G('〜まま','保持～的狀態（沒有改變）。','動詞た形・名詞の + まま','靴をはいたまま部屋に入らないでください。','請不要穿著鞋子進房間。','窓を開けた＿＿寝てしまいました。（開著窗就睡著了）','まま',['ばかり','ところ','うち']),
+G('〜ことがある（有時）','有時會～。','動詞辭書形・ない形 + ことがある','朝ご飯を食べないことがあります。','有時候不吃早餐。','忙しいときは、夜十時まで働く＿＿があります。（忙的時候有時會工作到晚上十點）','こと',['もの','ところ','はず'])
+]
+};
+
+// 情境會話：['角色','日文','中文'] = 對方台詞；{c:[[日文,中文],...], ok:[正確索引], fb:'說明'} = 你要選的回話
+// {q:'理解題', c:[[選項],...], ok:[0], fb} = 聽懂了嗎；['你',...] = 你自動說的話。第一個選項預設為正確答案（畫面會打亂順序）。
+// 第1–4週的台詞用假名並空格分詞，方便初學者對照羅馬拼音。
+const CONVO = [
+{w:1, id:'homestay', place:'寄宿家庭', title:'はじめまして！', goal:'第一次見到寄宿家庭的媽媽', lines:[
+ ['山田太太','はじめまして。やまだ です。','初次見面，我是山田。'],
+ {c:[['はじめまして。りん です。よろしく おねがいします。','初次見面，我姓林。請多指教。'],['おやすみなさい。','晚安。'],['いただきます。','開動了。']], fb:'第一次見面說「はじめまして」，最後加上「よろしく おねがいします」。'},
+ ['山田太太','よろしく おねがいします。どうぞ。','請多指教。請進。'],
+ {c:[['ありがとう ございます。','謝謝。'],['さようなら。','再見。'],['ごちそうさまでした。','我吃飽了。']], fb:'對方說「どうぞ（請）」，回答「ありがとうございます」。'},
+ ['山田太太','ごはん です よ。','吃飯囉。'],
+ {c:[['いただきます。','開動了。'],['ただいま。','我回來了。'],['こんばんは。','晚上好。']], fb:'吃飯前一定要說「いただきます」。'},
+ ['山田太太','おいしい？','好吃嗎？'],
+ {c:[['はい、おいしい です。','是的，很好吃。'],['いってきます。','我出門了。'],['はじめまして。','初次見面。']], fb:'「おいしい」是好吃，回答「はい、おいしいです」。'},
+ {c:[['ごちそうさまでした。','我吃飽了，謝謝招待。'],['いただきます。','開動了。'],['おかえりなさい。','歡迎回來。']], fb:'吃完飯說「ごちそうさまでした」。'},
+ ['山田太太','じゃ、おやすみなさい。','那麼，晚安。'],
+ {c:[['おやすみなさい。','晚安。'],['おはよう ございます。','早安。'],['いってらっしゃい。','路上小心。']], fb:'睡前互道「おやすみなさい」。'},
+ ['山田太太','おはよう。','早安。'],
+ {c:[['おはよう ございます。','早安。'],['こんばんは。','晚上好。'],['おかえりなさい。','歡迎回來。']], fb:'對長輩說早安要用完整的「おはようございます」。'},
+ ['你','いってきます。','我出門了。'],
+ ['山田太太','いってらっしゃい。','路上小心。']
+]},
+{w:2, id:'konbini1', place:'便利商店', title:'コンビニで おかいもの', goal:'在便利商店買便當結帳', lines:[
+ ['店員','いらっしゃいませ。','歡迎光臨。'],
+ ['店員','おべんとう、あたためますか。','便當要加熱嗎？'],
+ {c:[['はい、おねがいします。','好，麻煩你。'],['いいえ、だいじょうぶです。','不用了，沒關係。'],['いただきます。','開動了。']], ok:[0,1], fb:'要加熱說「おねがいします」，不用就說「だいじょうぶです」。兩個都可以！'},
+ ['店員','ふくろは いりますか。','需要袋子嗎？'],
+ {c:[['いいえ、だいじょうぶです。','不用，沒關係。'],['はい、おねがいします。','好，麻煩你。'],['はじめまして。','初次見面。']], ok:[0,1], fb:'日本的便利商店袋子要另外付費（3〜5日圓），不需要就說「だいじょうぶです」。'},
+ ['店員','ぜんぶで ごひゃく はちじゅう えん です。','全部 580 日圓。'],
+ {q:'店員說全部多少錢？', c:[['580 日圓'],['518 日圓'],['850 日圓']], fb:'ごひゃく＝500、はちじゅう＝80，所以是 580 日圓。'},
+ ['你','じゃあ、せんえんで。','那我付一千日圓。'],
+ ['店員','よんひゃく にじゅう えんの おかえし です。','找您 420 日圓。'],
+ {q:'店員找了多少錢？', c:[['420 日圓'],['402 日圓'],['240 日圓']], fb:'よんひゃく＝400、にじゅう＝20。注意「4」在這裡唸「よん」。'},
+ {c:[['どうも。','謝謝。'],['いらっしゃいませ。','歡迎光臨。'],['おやすみなさい。','晚安。']], fb:'簡單說「どうも」就很自然。'},
+ ['店員','ありがとう ございました。','謝謝光臨。']
+]},
+{w:3, id:'airport', place:'機場・計程車', title:'くうこうで', goal:'在機場問廁所、搭計程車到飯店', lines:[
+ ['服務台人員','こんにちは。どう しましたか。','你好，請問有什麼事嗎？'],
+ {c:[['すみません、トイレは どこですか。','不好意思，廁所在哪裡？'],['いってきます。','我出門了。'],['ごちそうさまでした。','我吃飽了。']], fb:'問路的第一句：「すみません」，再加「〜は どこですか」。'},
+ ['服務台人員','トイレは あそこ です。エレベーターの となり です。','廁所在那邊，電梯的旁邊。'],
+ {q:'廁所在哪裡？', c:[['電梯旁邊'],['餐廳裡面'],['計程車招呼站']], fb:'エレベーター＝電梯，となり＝旁邊。'},
+ {c:[['ありがとう ございます。タクシーは どこですか。','謝謝。計程車在哪裡？'],['タクシーを ください。','請給我計程車。'],['わかりません。','我不懂。']], fb:'先道謝，再用同樣句型「〜は どこですか」問下一個地點。'},
+ ['服務台人員','タクシーは いっかいの でぐち です。','計程車在一樓出口。'],
+ ['司機','どちらまで ですか。','請問到哪裡？'],
+ {c:[['この ホテルまで おねがいします。','麻煩到這間飯店。'],['ホテルを ください。','請給我飯店。'],['ホテルは いくらですか。','飯店多少錢？']], fb:'給司機看地址，說「〜まで おねがいします（麻煩到～）」。'},
+ ['司機','はい。……つきました。ごせん ろっぴゃく えん です。','好的。……到了，5600 日圓。'],
+ {q:'車資是多少？', c:[['5600 日圓'],['5060 日圓'],['6500 日圓']], fb:'ごせん＝5000、ろっぴゃく＝600（注意不是ろくひゃく）。'},
+ {c:[['カードで いいですか。','可以刷卡嗎？'],['カードを ください。','請給我卡。'],['カードは どこですか。','卡在哪裡？']], fb:'「〜で いいですか」＝用～可以嗎？付款時很好用。'},
+ ['司機','はい、だいじょうぶです。','可以，沒問題。']
+]},
+{w:4, id:'selfintro', place:'日語學校教室', title:'じこしょうかい', goal:'在班上自我介紹、和同學聊天', lines:[
+ ['田中老師','はじめまして。せんせいの たなか です。','初次見面，我是田中老師。'],
+ {c:[['はじめまして。りん です。たいわん から きました。','初次見面，我姓林，從台灣來。'],['りん は どこ ですか。','林在哪裡？'],['たなかさん です。','我是田中。']], fb:'自我介紹：名字＋「〜から きました（從～來）」。'},
+ ['田中老師','りんさん、よろしく おねがいします。','林同學，請多指教。'],
+ ['同學 櫻','りんさんは だいがくせい ですか。','林同學是大學生嗎？'],
+ {c:[['はい、だいがくせい です。','是的，我是大學生。'],['いいえ、さくらさん です。','不，是小櫻。'],['はい、たいわん です。','是的，是台灣。']], fb:'用「はい、〜です」回答是非題。'},
+ ['同學 櫻','わたしも だいがくせい です。それは なん ですか。','我也是大學生。那是什麼？'],
+ {c:[['これは たいわんの おかし です。どうぞ。','這是台灣的點心，請用。'],['あれは わたしの かさ です。','那（遠處）是我的傘。'],['それは どこ ですか。','那是哪裡？']], fb:'對方問「それ（你手邊的那個）」，你要用「これ（我手邊的這個）」回答。'},
+ ['同學 櫻','わあ、ありがとう！ おいしい！','哇，謝謝！好好吃！'],
+ {q:'小櫻覺得點心怎麼樣？', c:[['很好吃'],['太甜了'],['不喜歡']], fb:'おいしい＝好吃。'}
+]},
+{w:5, id:'yakusoku', place:'學校走廊', title:'週末の約束', goal:'約朋友週末一起出去', lines:[
+ ['櫻','林さん、土曜日は暇ですか。','林同學，星期六有空嗎？'],
+ {c:[['はい、暇です。','有，我有空。'],['はい、土曜日です。','是的，是星期六。'],['いいえ、暇でした。','不，有空過。']], fb:'「暇ですか（有空嗎）」→「はい、暇です」。'},
+ ['櫻','一緒に映画を見ませんか。','要不要一起看電影？'],
+ {c:[['いいですね。見ましょう。','好啊，一起看吧。'],['映画を見ませんでした。','我沒看電影。'],['映画は見ます。','電影我會看。']], fb:'接受邀約：「いいですね」＋「〜ましょう」。'},
+ ['櫻','じゃ、何時に会いましょうか。','那幾點見面呢？'],
+ {c:[['十時はどうですか。','十點怎麼樣？'],['十時に寝ます。','我十點睡覺。'],['土曜日です。','是星期六。']], fb:'提議時間：「〜はどうですか（～如何？）」。'},
+ ['櫻','十時ですね。駅で会いましょう。映画は十時半から十二時半までです。','十點是吧。在車站見吧。電影從十點半到十二點半。'],
+ {q:'電影幾點結束？', c:[['12:30'],['10:30'],['10:00']], fb:'〜から〜まで＝從～到～，結束時間是十二時半。'},
+ ['櫻','映画のあとで、昼ご飯を食べませんか。','看完電影要不要吃午餐？'],
+ {c:[['ええ、ぜひ。','嗯，一定要。'],['昼ご飯を食べました。','我吃過午餐了。'],['いいえ、映画です。','不，是電影。']], fb:'「ぜひ」＝務必、一定要，表示很樂意。'},
+ ['櫻','じゃ、土曜日に。','那星期六見。']
+]},
+{w:6, id:'restaurant', place:'定食屋', title:'レストランで注文', goal:'在餐廳點餐、結帳', lines:[
+ ['店員','いらっしゃいませ。何名様ですか。','歡迎光臨，請問幾位？'],
+ {c:[['二人です。','兩個人。'],['二つです。','兩個。'],['二枚です。','兩張。']], fb:'人數用「〜人」：一人（ひとり）、二人（ふたり）。'},
+ ['店員','こちらへどうぞ。ご注文は？','這邊請。要點什麼？'],
+ {c:[['この定食を二つください。','請給我兩份這個套餐。'],['この定食は二人です。','這個套餐是兩個人。'],['定食がほしかったです。','我以前想要套餐。']], fb:'點餐：「〜を（數量）ください」，指著菜單說「これ／この〜」最方便。'},
+ ['店員','お飲み物は？','飲料呢？'],
+ {c:[['お茶を二つお願いします。','請給我兩杯茶。'],['お茶は飲みません。','我不喝茶。'],['水は冷たいです。','水是冰的。']], ok:[0,1], fb:'要點就說「〜をお願いします」；不要也可以直接說不喝。'},
+ ['店員','はい。少々お待ちください。','好的，請稍等。'],
+ ['店員','お待たせしました。熱いですから、気をつけてください。','讓您久等了。很燙，請小心。'],
+ {q:'店員提醒了什麼？', c:[['料理很燙'],['料理很辣'],['料理很貴']], fb:'熱い＝燙的。'},
+ ['你','すみません、お会計をお願いします。','不好意思，麻煩結帳。'],
+ ['店員','二千四百円です。','2400 日圓。'],
+ {c:[['カードで払えますか。','可以刷卡嗎？'],['二千四百円をください。','請給我 2400 日圓。'],['安いですか。','便宜嗎？']], fb:'問能不能刷卡。很多小店只收現金，先問比較保險。'},
+ ['店員','すみません、現金だけです。','不好意思，只收現金。'],
+ {c:[['じゃあ、現金で。','那我付現金。'],['じゃあ、カードで。','那我刷卡。'],['いただきます。','開動了。']], fb:'只收現金（現金だけ），就改付現金。'},
+ ['店員','ありがとうございました。','謝謝光臨。']
+]},
+{w:7, id:'michi', place:'街道', title:'道を聞く', goal:'向路人問往神社的路', lines:[
+ {c:[['すみません、駅はどこですか。','不好意思，車站在哪裡？'],['駅に住んでいます。','我住在車站。'],['駅で会いましょう。','在車站見吧。']], fb:'問路固定句：「すみません、〜はどこですか」。'},
+ ['路人','駅ですか。この道をまっすぐ行って、二つ目の信号を右に曲がってください。','車站嗎？這條路直走，在第二個紅綠燈右轉。'],
+ {q:'要在哪裡轉彎？', c:[['第二個紅綠燈右轉'],['第一個紅綠燈左轉'],['第二個轉角左轉']], fb:'二つ目＝第二個，右に曲がる＝右轉。'},
+ {c:[['ここから遠いですか。','離這裡遠嗎？'],['ここは駅ですか。','這裡是車站嗎？'],['右は遠いです。','右邊很遠。']], fb:'問距離：「ここから遠いですか」。'},
+ ['路人','いいえ、歩いて五分ぐらいですよ。銀行の隣です。','不遠，走路大約五分鐘喔。在銀行隔壁。'],
+ {q:'車站在哪裡？走路要多久？', c:[['銀行隔壁，約 5 分鐘'],['銀行對面，約 15 分鐘'],['郵局隔壁，約 5 分鐘']], fb:'銀行の隣＝銀行隔壁；五分ぐらい＝大約五分鐘。'},
+ {c:[['ありがとうございました。','謝謝您。'],['いらっしゃいませ。','歡迎光臨。'],['ごめんなさい。','對不起。']], fb:'對方幫完忙後，用過去式「ありがとうございました」道謝。'},
+ ['路人','いいえ。気をつけて。','不客氣，小心喔。']
+]},
+{w:8, id:'hotel', place:'飯店櫃台', title:'ホテルのチェックイン', goal:'辦理入住、詢問設施', lines:[
+ ['櫃台人員','いらっしゃいませ。','歡迎光臨。'],
+ {c:[['予約した林です。チェックインをお願いします。','我是有預約的林，麻煩辦理入住。'],['林を予約してください。','請預約林。'],['チェックインしましたか。','你入住了嗎？']], fb:'報上名字＋「チェックインをお願いします」。'},
+ ['櫃台人員','林様ですね。パスポートを見せてください。','林先生/小姐對吧，請出示護照。'],
+ {c:[['はい、どうぞ。','好的，請看。'],['いいえ、見ません。','不，我不看。'],['パスポートを書いてください。','請寫護照。']], fb:'遞東西給人時說「どうぞ」。'},
+ ['櫃台人員','こちらに名前と住所を書いてください。','請在這裡寫上姓名和地址。'],
+ ['櫃台人員','お部屋は五階の五〇三号室です。朝ご飯は七時から九時半まで、一階のレストランで食べてください。','房間在五樓 503 號房。早餐從七點到九點半，請在一樓餐廳用餐。'],
+ {q:'早餐在哪裡、幾點到幾點？', c:[['一樓餐廳，7:00〜9:30'],['五樓餐廳，7:00〜9:00'],['一樓餐廳，9:00〜9:30']], fb:'七時から九時半まで、一階のレストランで。'},
+ {c:[['すみません、Wi-Fiのパスワードを教えてください。','不好意思，請告訴我 Wi-Fi 密碼。'],['Wi-Fiを使ってはいけません。','不可以用 Wi-Fi。'],['Wi-Fiは寝ています。','Wi-Fi 在睡覺。']], fb:'「〜を教えてください」＝請告訴我～，非常實用。'},
+ ['櫃台人員','このカードに書いてあります。それから、部屋でたばこを吸わないでください。','寫在這張卡片上。另外，請不要在房間抽菸。'],
+ {q:'櫃台人員最後提醒了什麼？', c:[['不要在房間抽菸'],['不要在房間吃東西'],['要在九點前回來']], fb:'〜ないでください＝請不要～。'},
+ {c:[['はい、わかりました。','好的，我知道了。'],['はい、吸いましょう。','好，一起抽吧。'],['いいえ、わかりません。','不，我不懂。']], fb:'聽懂了就回「わかりました」。'}
+]},
+{w:9, id:'fuku', place:'服飾店', title:'服を買う', goal:'試穿衣服、換尺寸', lines:[
+ ['店員','何かお探しですか。','在找什麼嗎？'],
+ {c:[['白いシャツがほしいんですが。','我想要白色的襯衫。'],['白いシャツは好きでした。','我以前喜歡白襯衫。'],['シャツが白くなりました。','襯衫變白了。']], fb:'「〜がほしいんですが」＝我想要～（委婉地說明來意）。'},
+ ['店員','こちらはいかがですか。軽くて、とても人気ですよ。','這件如何？又輕又很受歡迎喔。'],
+ {c:[['着てもいいですか。','可以試穿嗎？'],['着てはいけません。','不可以穿。'],['着ませんでした。','沒有穿。']], fb:'試穿前先問「着てもいいですか」。'},
+ ['店員','どうぞ。試着室はあちらです。','請。試衣間在那邊。'],
+ {c:[['ちょっと小さいです。もう少し大きいのはありますか。','有點小。有再大一點的嗎？'],['ちょっと小さいのがほしいです。','我想要小一點的。'],['大きいです。小さいです。','很大。很小。']], fb:'「もう少し〜のはありますか」＝有再～一點的嗎？「の」代替「シャツ」。'},
+ ['店員','はい、Lサイズもありますよ。色は白と青があります。','有的，也有 L 號。顏色有白色和藍色。'],
+ {q:'這件襯衫有哪些顏色？', c:[['白色和藍色'],['白色和黑色'],['只有白色']], fb:'白と青＝白色和藍色。'},
+ {c:[['じゃ、白いのをください。','那請給我白色的。'],['白いのは好きじゃありません。','我不喜歡白色的。'],['青いです。','是藍色的。']], fb:'決定購買：「〜をください」。'},
+ ['店員','ありがとうございます。三千九百八十円です。','謝謝。3980 日圓。']
+]},
+{w:10, id:'drugstore', place:'藥妝店', title:'薬を買う', goal:'描述症狀、買感冒藥', lines:[
+ ['藥劑師','どうしましたか。','怎麼了嗎？'],
+ {c:[['昨日から頭が痛くて、のども痛いです。','從昨天開始頭痛，喉嚨也痛。'],['頭がいいです。','頭腦很好。'],['昨日は元気でした。','昨天很有精神。']], fb:'描述症狀：「〜が痛いです」，「昨日から」＝從昨天開始。'},
+ ['藥劑師','熱はありますか。','有發燒嗎？'],
+ {c:[['少しあります。三十七度五分です。','有一點，37.5 度。'],['熱いです。','很燙。'],['熱が好きです。','我喜歡熱。']], fb:'「熱がある」＝發燒。體溫說法：三十七度五分＝37.5 度。'},
+ ['藥劑師','風邪ですね。この薬を一日三回、ご飯のあとで飲んでください。','是感冒吧。這個藥一天三次，請在飯後吃。'],
+ {q:'藥要怎麼吃？', c:[['一天三次，飯後'],['一天兩次，飯前'],['一天三次，睡前']], fb:'一日三回＝一天三次；ご飯のあとで＝飯後。'},
+ {c:[['眠くなりますか。','會想睡嗎？'],['眠いですか。','你睏嗎？'],['寝てください。','請睡覺。']], fb:'問副作用：「眠くなりますか」＝會變得想睡嗎？'},
+ ['藥劑師','少し眠くなりますから、車を運転しないでください。','會有點想睡，所以請不要開車。'],
+ {q:'吃藥後不能做什麼？', c:[['開車'],['洗澡'],['喝水']], fb:'運転しないでください＝請不要開車。'},
+ {c:[['わかりました。ありがとうございます。','我明白了，謝謝。'],['運転します。','我要開車。'],['お大事に。','請保重。']], fb:'「お大事に」是對病人說的話，所以病人自己不會說。'},
+ ['藥劑師','お大事に。','請多保重。']
+]},
+{w:11, id:'cafe', place:'咖啡廳', title:'カフェでおしゃべり', goal:'和朋友聊天、說明理由', lines:[
+ ['櫻','林さん、どうしたんですか。元気がないですね。','林同學，怎麼了？好像沒什麼精神耶。'],
+ {c:[['昨日あまり寝なかったんです。','昨天沒怎麼睡。'],['昨日はとても寝ました。','昨天睡很多。'],['元気です。ありがとう。','我很好，謝謝。']], ok:[0], fb:'被問「どうしたんですか」，用「〜んです」說明原因最自然。'},
+ ['櫻','どうしてですか。','為什麼呢？'],
+ {c:[['明日テストがあるから、遅くまで勉強したんです。','因為明天有考試，所以念書念到很晚。'],['テストがあるから、遊びました。','因為有考試所以去玩了。'],['テストは昨日でした。','考試是昨天。']], fb:'「〜から」說明理由：因為有考試，所以念到很晚。'},
+ ['櫻','大変ですね。何か甘いものでも食べませんか。','好辛苦喔。要不要吃點甜的東西什麼的？'],
+ {c:[['いいですね。私はチーズケーキにします。','好啊，我要起司蛋糕。'],['ケーキをします。','我做蛋糕。'],['何も食べたいです。','什麼都想吃。']], fb:'點餐決定用「〜にします」。'},
+ ['櫻','私はコーヒーだけにします。ダイエット中なんです。','我只要咖啡就好。我正在減肥。'],
+ {q:'櫻為什麼只點咖啡？', c:[['正在減肥'],['沒有錢'],['不喜歡甜食']], fb:'ダイエット中＝正在減肥。'},
+ {c:[['そうなんですか。でも、ここのケーキは日本で一番おいしいですよ。','這樣啊。可是這裡的蛋糕是全日本最好吃的喔。'],['そうですか。ケーキは高いでした。','這樣啊。蛋糕很貴了。'],['ダイエットをください。','請給我減肥。']], fb:'「高いでした」是錯的，い形容詞過去式是「高かったです」。'},
+ ['櫻','えっ、本当？ じゃ、一つだけ……！','咦，真的嗎？那就吃一個就好……！']
+]},
+{w:12, id:'fudosan', place:'不動產屋', title:'部屋を探す', goal:'向仲介說明條件、看房', lines:[
+ ['仲介','いらっしゃいませ。どんな部屋をお探しですか。','歡迎光臨。在找什麼樣的房子呢？'],
+ {c:[['駅から歩いて行ける部屋がいいです。家賃は六万円ぐらいまでです。','想要走路能到車站的房子，房租大約六萬日圓以內。'],['駅に住めます。','可以住在車站。'],['六万円の駅がいいです。','六萬日圓的車站比較好。']], fb:'用可能形「行ける」表達條件；「〜ぐらいまで」＝大約～以內。'},
+ ['仲介','この部屋はいかがですか。駅から徒歩七分、家賃は五万八千円です。ただ、ペットは飼えません。','這間如何？距離車站步行七分鐘，房租 58000 日圓。不過不能養寵物。'],
+ {q:'這間房子的條件是？', c:[['步行7分、58000日圓、不能養寵物'],['步行17分、50800日圓、可以養寵物'],['步行7分、85000日圓、不能養寵物']], fb:'徒歩七分＝步行七分鐘；飼えません＝不能養。'},
+ {c:[['部屋の中を見ることができますか。','可以看看房間裡面嗎？'],['部屋の中で見ています。','正在房間裡看。'],['部屋を見たことがあります。','我看過房間。']], fb:'「〜ことができますか」＝可以～嗎？比可能形更正式。'},
+ ['仲介','はい、今から見に行きましょう。','可以，現在就去看吧。'],
+ ['仲介','ここが台所で、エアコンもついています。ゴミは月曜日と木曜日に出してください。','這裡是廚房，也有附冷氣。垃圾請在星期一和星期四丟。'],
+ {q:'什麼時候丟垃圾？', c:[['星期一和星期四'],['星期二和星期五'],['每天都可以']], fb:'日本垃圾要按規定的日子分類丟，搬家後第一件事就是確認丟垃圾的日子。'},
+ {c:[['明るくていい部屋ですね。ここに決めます。','又明亮又好的房間，就決定這間了。'],['明るいでいい部屋ですね。','明亮的好房間耶。（文法錯誤）'],['部屋が決まりました。','房子決定好了。']], fb:'形容詞連接：明るい→明るくて。「決める」是自己決定。'}
+]},
+{w:13, id:'yakusho', place:'區公所', title:'区役所で手続き', goal:'辦理遷入登記（住民登錄）', lines:[
+ ['職員','次の方、どうぞ。','下一位，請。'],
+ {c:[['引っ越してきたので、住所の手続きをしたいんですが。','因為搬過來了，想辦理地址的手續。'],['引っ越していくので、住所を忘れました。','因為要搬走，地址忘了。'],['住所を作ってあります。','地址做好了。']], fb:'「〜てきた」＝搬過來（朝向這裡）；「〜たいんですが」委婉地說明來意。'},
+ ['職員','在留カードはお持ちですか。','有帶在留卡嗎？'],
+ {c:[['はい、ここに持ってきました。','有，我帶來了。'],['はい、持っていきます。','好，我會帶走。'],['いいえ、持ちません。','不，我不拿。']], fb:'「持ってくる」＝帶過來。'},
+ ['職員','では、この申込書に名前と新しい住所を書いておいてください。書き終わったら、三番の窓口に出してください。','那麼請先在這張申請表填好姓名和新地址。寫完後請交到 3 號窗口。'],
+ {q:'寫完申請表後要怎麼做？', c:[['交到 3 號窗口'],['在這裡等'],['帶回家寄出']], fb:'書き終わったら＝寫完的話；三番の窓口＝3號窗口。'},
+ {c:[['すみません、ここは何を書けばいいですか。','不好意思，這裡要寫什麼才好？'],['ここに何を書いてしまいましたか。','這裡不小心寫了什麼？'],['ここは書いてありました。','這裡寫好了。']], fb:'「〜ばいいですか」＝～才好呢？問做法時很常用。'},
+ ['職員','そこは電話番号です。それから、国民健康保険の手続きもしておいてくださいね。','那裡寫電話號碼。另外，國民健康保險的手續也請先辦好喔。'],
+ {q:'職員提醒還要辦什麼手續？', c:[['國民健康保險'],['銀行開戶'],['駕照']], fb:'国民健康保険＝國民健康保險，留學生也要加入。'},
+ {c:[['わかりました。ありがとうございました。','我知道了，謝謝。'],['もう行ってしまいました。','已經去了。'],['保険がありません。','沒有保險。']], fb:'辦完手續記得道謝。'}
+]},
+{w:14, id:'izakaya', place:'居酒屋（電話預約）', title:'お店を予約する', goal:'打電話預約聚餐', lines:[
+ ['店員','はい、居酒屋「さくら」でございます。','您好，這裡是居酒屋「櫻」。'],
+ {c:[['予約をお願いしたいんですが。','我想預約。'],['予約をしてしまいました。','不小心預約了。'],['予約はありません。','沒有預約。']], fb:'打電話預約的第一句。'},
+ ['店員','ありがとうございます。いつがよろしいですか。','謝謝您。請問哪天方便呢？'],
+ {c:[['今週の金曜日の夜七時から、六人です。','這週五晚上七點開始，六個人。'],['金曜日に七人が六時です。','星期五七個人是六點。'],['毎週金曜日です。','每週五。']], fb:'預約要說清楚：日期、時間、人數。'},
+ ['店員','金曜日は七時半からでしたら、ご用意できますが。','星期五的話，如果是七點半開始就可以為您準備。'],
+ {q:'店員說星期五幾點可以？', c:[['七點半開始'],['七點開始'],['六點半開始']], fb:'七時半からでしたら＝如果是七點半開始的話。'},
+ {c:[['じゃあ、七時半でお願いします。','那就麻煩七點半。'],['七時半なら、行きません。','如果是七點半就不去了。'],['七時半が終わりました。','七點半結束了。']], fb:'接受店家提議的時間。'},
+ ['店員','かしこまりました。食べ放題のコースもございますが、いかがなさいますか。','明白了。也有吃到飽的套餐，請問您要怎麼安排？'],
+ {c:[['いくらですか。','多少錢？'],['食べすぎました。','吃太多了。'],['コースが作ってあります。','套餐做好了。']], fb:'先問價錢再決定。'},
+ ['店員','お一人様三千五百円で、二時間です。','每人 3500 日圓，兩小時。'],
+ {c:[['じゃあ、それにします。名前は林です。','那就要那個。我姓林。'],['それにしました。名前は林でした。','（時態不對）'],['二時間は長すぎます。','兩小時太長了。']], fb:'用「〜にします」做決定，最後報上名字。'}
+]},
+{w:15, id:'clinic', place:'診所', title:'病院で診てもらう', goal:'看醫生、說明症狀', lines:[
+ ['櫃台','初めてですか。保険証を出してください。','第一次來嗎？請出示健保卡。'],
+ {c:[['はい、初めてです。これでいいですか。','是的，第一次。這個可以嗎？'],['はい、保険証を作っています。','是的，正在做健保卡。'],['初めてじゃなかったです。','（時態不自然）']], fb:'把健保卡交給櫃台。'},
+ ['醫生','今日はどうしましたか。','今天怎麼了？'],
+ {c:[['おとといから熱が下がらなくて、咳も出るんです。','從前天開始一直不退燒，也會咳嗽。'],['おとといから熱が上がりました。元気です。','前天發燒了。我很好。'],['咳をしてみます。','我試著咳嗽看看。']], fb:'「〜なくて」連接原因；「咳が出る」＝咳嗽。'},
+ ['醫生','そうですか。喉を見せてください。……少し赤いですね。インフルエンザかもしれませんから、検査しましょう。','這樣啊。請讓我看喉嚨。……有點紅。可能是流感，來檢查看看吧。'],
+ {q:'醫生覺得可能是什麼？', c:[['流感'],['過敏'],['骨折']], fb:'インフルエンザかもしれません＝說不定是流感。'},
+ ['醫生','インフルエンザではありませんでした。普通の風邪ですね。三日分の薬を出しておきます。','不是流感，是一般感冒。我先開三天份的藥。'],
+ {c:[['お風呂に入ってもいいですか。','可以洗澡嗎？'],['お風呂に入らなければなりません。','我必須洗澡。'],['薬を出しておきましたか。','藥開好了嗎？']], fb:'「〜てもいいですか」詢問許可。'},
+ ['醫生','熱が下がるまでは、入らないほうがいいですね。それから、学校は二、三日休んだほうがいいですよ。','退燒之前最好不要洗。另外，學校最好請兩三天假。'],
+ {q:'醫生建議什麼？', c:[['退燒前別洗澡，請兩三天假'],['每天洗澡，照常上學'],['只要多喝水']], fb:'〜ないほうがいい＝最好不要；〜たほうがいい＝最好要。'},
+ {c:[['わかりました。ありがとうございました。','我知道了，謝謝醫生。'],['休まなくてもいいです。','不休息也可以。'],['お大事に。','請保重。']], fb:'病人道謝即可，「お大事に」是醫生對病人說的。'}
+]},
+{w:16, id:'bank', place:'銀行', title:'銀行で口座を作る', goal:'開戶並了解規定', lines:[
+ ['行員','いらっしゃいませ。本日はどのようなご用件でしょうか。','歡迎光臨。今天要辦什麼業務呢？'],
+ {c:[['口座を作りたいんですが、留学生でも作れますか。','我想開戶，留學生也可以開嗎？'],['口座が作ってあります。','帳戶開好了。'],['口座を作ったことがあります。','我開過帳戶。']], fb:'用可能形問「留学生でも作れますか（留學生也能開嗎）」。'},
+ ['行員','はい、作れます。ただ、日本に来て六か月たっていない方は、ATMでしか使えないカードになります。','可以的。不過來日本未滿六個月的人，會是只能在 ATM 使用的卡。'],
+ {q:'來日本未滿六個月有什麼限制？', c:[['卡片只能在 ATM 使用'],['不能開戶'],['要付手續費']], fb:'〜でしか使えない＝只能在～使用。'},
+ {c:[['それで大丈夫です。何が必要ですか。','那樣沒問題。需要什麼？'],['それでは困ります。帰ります。','那樣我很困擾，要回去了。'],['六か月たってしまいました。','已經過六個月了。']], ok:[0], fb:'確認需要的文件。'},
+ ['行員','在留カードと学生証、それから印鑑が必要です。','需要在留卡、學生證，還有印章。'],
+ {q:'開戶需要準備什麼？', c:[['在留卡、學生證、印章'],['護照、健保卡、印章'],['在留卡、護照、照片']], fb:'印鑑＝印章，在日本很多手續都需要。'},
+ ['你','印鑑を忘れてしまったんですが……。','我不小心忘了帶印章……。'],
+ ['行員','サインでも大丈夫ですよ。この用紙に書いていただけますか。','用簽名也可以喔。可以請您填寫這張表格嗎？'],
+ {c:[['はい、わかりました。','好的，我知道了。'],['いいえ、書いていただきます。','不，請您寫。'],['サインをもらいたいです。','我想要簽名。']], fb:'「〜ていただけますか」是禮貌的請求，回答「はい」即可。'}
+]},
+{w:17, id:'baito', place:'打工面試', title:'アルバイトの面接', goal:'參加便利商店打工面試', lines:[
+ ['店長','どうぞ、座ってください。日本に来てどのくらいですか。','請坐。來日本多久了？'],
+ {c:[['半年ぐらいです。','大約半年。'],['半年ぐらいかかります。','要花大約半年。'],['半年後に来ます。','半年後來。']], fb:'問期間長度，回答「〜ぐらいです」。'},
+ ['店長','アルバイトをしたことはありますか。','有打工過嗎？'],
+ {c:[['台湾で、レストランで働いたことがあります。','在台灣的時候，在餐廳打過工。'],['レストランで働いていきます。','會在餐廳一直工作下去。'],['働くことがあります。','有時會工作。']], fb:'經驗用「〜たことがあります」。'},
+ ['店長','そうですか。週に何日ぐらい働けますか。','這樣啊。一週大概能工作幾天？'],
+ {c:[['授業がない日なら、週に三日働けます。','沒課的日子的話，一週可以工作三天。'],['週に三日働かなければなりません。','一週必須工作三天。'],['三日働いてみました。','試著工作了三天。']], fb:'「〜なら」提出條件；可能形「働けます」。'},
+ ['店長','留学生は週二十八時間までしか働けませんから、気をつけてくださいね。','留學生一週最多只能工作 28 小時，請注意喔。'],
+ {q:'留學生的打工時數限制是？', c:[['每週最多 28 小時'],['每天最多 8 小時'],['每週最多 20 小時']], fb:'〜までしか働けません＝最多只能工作到～。這是日本的實際規定。'},
+ ['店長','何か質問はありますか。','有什麼問題嗎？'],
+ {c:[['仕事は何時から始まりますか。','工作幾點開始？'],['質問がありました。','（時態錯誤）'],['質問してもらいます。','請你提問。']], fb:'面試最後可以問工作細節，表示積極。'},
+ ['店長','朝の場合は六時からです。結果は来週までに連絡しますね。','早班的話從六點開始。結果會在下週前通知你。'],
+ {q:'什麼時候會通知結果？', c:[['下週之前'],['下週之後'],['今天晚上']], fb:'来週までに＝在下週之前。'}
+]},
+{w:18, id:'shinkansen', place:'車站售票處', title:'新幹線の切符を買う', goal:'買新幹線的對號座來回票', lines:[
+ ['站務員','どちらまでですか。','請問到哪裡？'],
+ {c:[['京都まで、往復でお願いします。','到京都，麻煩來回票。'],['京都から来ました。','我從京都來。'],['京都に行ったことがあります。','我去過京都。']], fb:'買票：目的地＋片道（單程）／往復（來回）。'},
+ ['站務員','指定席と自由席、どちらになさいますか。','對號座和自由座，您要哪一種？'],
+ {c:[['指定席で、窓側がいいです。','對號座，靠窗比較好。'],['指定席が座っています。','對號座在坐著。'],['自由に座ってください。','請自由坐。']], fb:'窓側＝靠窗，通路側＝靠走道。'},
+ ['站務員','明日の九時十分発の「のぞみ」がございます。京都着は十一時二十四分です。','有明天 9:10 出發的「希望號」，11:24 抵達京都。'],
+ {q:'列車幾點抵達京都？', c:[['11:24'],['9:10'],['11:42']], fb:'〜発＝～出發；〜着＝～抵達。'},
+ {c:[['もう少し早いのはありませんか。','有再早一點的嗎？'],['もう少し早く来ればよかった。','早知道早點來。'],['早すぎます。','太早了。']], fb:'「もう少し〜のはありませんか」＝有再～一點的嗎？'},
+ ['站務員','八時半のは、窓側がもう売り切れてしまいました。','八點半那班的靠窗位子已經賣完了。'],
+ {c:[['じゃあ、九時十分ので大丈夫です。','那九點十分那班就可以了。'],['じゃあ、売り切れてください。','那請賣完。'],['八時半に乗らなければなりません。','必須搭八點半的。']], fb:'接受另一班車。'},
+ ['站務員','往復で二万八千四百円です。何番線から出るかは、電光掲示板で確認してください。','來回 28400 日圓。從幾號月台出發，請看電子看板確認。'],
+ {q:'要怎麼知道從哪個月台出發？', c:[['看電子看板'],['問司機'],['看車票背面']], fb:'電光掲示板＝電子告示板（發車資訊看板）。'}
+]},
+{w:19, id:'yubin', place:'郵局', title:'郵便局で荷物を送る', goal:'寄包裹回台灣', lines:[
+ {c:[['この荷物を台湾に送りたいんですが。','我想把這個包裹寄到台灣。'],['この荷物が台湾から届きました。','這個包裹從台灣寄到了。'],['台湾に送ってもらいました。','請人寄到台灣了。']], fb:'說明來意：「〜たいんですが」。'},
+ ['職員','航空便と船便がありますが、どちらにしますか。','有航空和海運，要選哪個？'],
+ {c:[['どのくらいかかりますか。','要花多久時間？'],['どちらもしません。','兩個都不要。'],['船で行きます。','我搭船去。']], fb:'先問天數再決定。'},
+ ['職員','航空便なら一週間ぐらい、船便なら一か月以上かかります。でも、船便のほうがずっと安いですよ。','航空的話大約一週，海運的話要一個月以上。不過海運便宜得多喔。'],
+ {q:'海運的特點是？', c:[['比較慢但便宜很多'],['比較快也比較便宜'],['比較慢也比較貴']], fb:'〜のほうがずっと安い＝～便宜得多。'},
+ {c:[['急いでいないので、船便にします。','我不急，所以選海運。'],['急いでいるので、船便にします。','因為很急所以選海運。（不合理）'],['船便が急ぎました。','海運趕快了。']], fb:'用「〜ので」說明理由，再用「〜にします」做決定。'},
+ ['職員','中に何が入っていますか。壊れやすい物はありますか。','裡面裝了什麼？有容易壞的東西嗎？'],
+ {c:[['本と服だけです。壊れやすい物は入っていません。','只有書和衣服，沒有易碎物品。'],['本と服しか入っています。','（文法錯誤：しか要接否定）'],['壊れてしまいました。','不小心壞了。']], fb:'「しか」後面一定要接否定。'},
+ ['職員','では、この用紙に送り先の住所を書いてください。','那麼請在這張單子寫上收件地址。']
+]},
+{w:20, id:'jishin', place:'公寓（鄰居）', title:'地震のあとで', goal:'地震後與鄰居確認狀況', lines:[
+ ['鄰居 鈴木','林さん、大丈夫でしたか。さっきの地震、大きかったですね。','林同學，你沒事吧？剛才的地震好大喔。'],
+ {c:[['はい、大丈夫です。でも、棚から本が落ちてきて、びっくりしました。','我沒事。但是書從架子上掉下來，嚇了一跳。'],['はい、地震が起こしました。','（自他動詞錯誤）'],['地震は大きくないでした。','（文法錯誤）']], fb:'「落ちてくる」＝掉下來（朝向自己）。'},
+ ['鄰居 鈴木','日本は地震が多いですから、水や食べ物を準備しておいたほうがいいですよ。','日本地震很多，最好先準備好水和食物喔。'],
+ {q:'鄰居建議先準備什麼？', c:[['水和食物'],['現金和護照'],['手電筒和收音機']], fb:'〜を準備しておく＝事先準備好～。'},
+ {c:[['地震のとき、どこに逃げればいいですか。','地震的時候要逃到哪裡才好？'],['地震のとき、逃げてしまいました。','地震時不小心逃了。'],['地震が逃げました。','地震逃跑了。']], fb:'「〜ばいいですか」詢問該怎麼做。'},
+ ['鄰居 鈴木','この近くだと、小学校が避難所になっています。ニュースによると、今夜も揺れるかもしれないそうですよ。','這附近的話，小學是避難所。新聞說今晚可能也會搖喔。'],
+ {q:'這附近的避難所在哪裡？', c:[['小學'],['車站'],['公園']], fb:'避難所＝避難場所；小学校＝小學。'},
+ {c:[['そうですか。教えてくれてありがとうございます。','這樣啊，謝謝你告訴我。'],['教えてあげてありがとう。','（授受錯誤）'],['揺れたかもしれませんでした。','（文法錯誤）']], fb:'感謝別人為自己做的事：「〜てくれてありがとう」。'}
+]},
+{w:21, id:'homevisit', place:'寄宿家庭（再訪）', title:'久しぶりの再会', goal:'拜訪以前的寄宿家庭', lines:[
+ ['山田太太','まあ、林さん！ 久しぶりですね。日本語がすごく上手になりましたね。','哇，林同學！好久不見。你的日語變得好厲害喔。'],
+ {c:[['いいえ、まだまだです。これ、つまらない物ですが、どうぞ。','哪裡，還差得遠。這是一點小東西，請收下。'],['はい、上手です。これをください。','是的，我很厲害。請給我這個。'],['上手になりませんでした。','沒有變厲害。']], fb:'被稱讚要謙虛回應；送禮的客套話「つまらない物ですが」。'},
+ ['山田太太','わざわざありがとう。台湾のお菓子、懐かしいわ。','特地帶來真謝謝。台灣的點心，好懷念喔。'],
+ ['山田太太','日本の生活はどう？ 寂しくない？','在日本的生活怎麼樣？不寂寞嗎？'],
+ {c:[['最初は寂しかったけど、友達がたくさんできて、今は毎日楽しいです。','剛開始很寂寞，但交了很多朋友，現在每天都很開心。'],['寂しがっています。','（第三人稱用法，用在自己身上不對）'],['寂しかったらいいです。','寂寞的話就好。']], fb:'說自己的感覺直接用「寂しい」，「〜がる」是描述別人。'},
+ ['山田太太','それはよかった。うちの娘も林さんに会いたがっていたのよ。','那太好了。我女兒也一直很想見你呢。'],
+ {q:'山田太太的女兒怎麼了？', c:[['一直很想見林同學'],['正在找工作'],['去了台灣']], fb:'会いたがっていた＝（她）一直想見。'},
+ {c:[['本当ですか。うれしいです。','真的嗎？好開心。'],['会いたがります。','（用法錯誤）'],['怒っています。','生氣了。']], fb:'表達自己的心情：「うれしいです」。'}
+]},
+{w:22, id:'sensei', place:'教授研究室', title:'先生にお願いする', goal:'用敬語請老師寫推薦信', lines:[
+ {c:[['失礼します。今、少しよろしいでしょうか。','打擾了。請問現在方便嗎？'],['失礼しました。今、暇ですか。','打擾了。現在有空嗎？（太隨便）'],['ちょっと来て。','過來一下。']], fb:'進老師研究室：「失礼します」＋確認對方是否方便。'},
+ ['教授','ああ、林さん。どうぞ。','啊，林同學。請進。'],
+ {c:[['実は、大学院の推薦状を書いていただきたいんですが……。','其實，我想請您幫我寫研究所的推薦信……。'],['推薦状を書いてくれ。','幫我寫推薦信。（不禮貌）'],['推薦状を書いてあげます。','我幫你寫推薦信。']], fb:'「〜ていただきたいんですが」是非常禮貌的請託。'},
+ ['教授','いいですよ。締め切りはいつですか。','可以喔。截止日是什麼時候？'],
+ {c:[['来月の十日です。必要な書類は明日お持ちします。','下個月十號。需要的資料我明天帶過來。'],['来月の十日です。明日お持ちになります。','（敬語用錯：自己的動作要用謙讓語）'],['十日まで書いてください。','請寫到十號。']], fb:'自己的動作用謙讓語「お〜します」，不能用尊敬語「お〜になる」。'},
+ ['教授','わかりました。研究計画書も見せてください。','好的。研究計畫書也讓我看一下。'],
+ {c:[['はい、メールでお送りします。お忙しいところ、ありがとうございます。','好的，我會用郵件寄給您。百忙之中，謝謝您。'],['はい、ご覧になります。','（敬語用錯）'],['はい、見せてもらいます。','好，請你給我看。（方向錯誤）']], fb:'「お送りします」謙讓語；「お忙しいところ」是感謝對方撥空的客套話。'},
+ ['教授','頑張ってくださいね。','加油喔。'],
+ {c:[['はい。失礼いたします。','好的，那我先告辭了。'],['じゃあね。','掰掰。'],['頑張ってください。','請加油。']], fb:'離開時說「失礼いたします」。'}
+]},
+{w:23, id:'koban', place:'派出所', title:'交番で忘れ物', goal:'到派出所報失錢包', lines:[
+ ['警察','どうしましたか。','怎麼了？'],
+ {c:[['財布を落としてしまったんです。','我不小心弄丟錢包了。'],['財布が落としました。','（自他動詞錯誤）'],['財布を拾ってあげました。','我幫你撿了錢包。']], fb:'「〜てしまった」表達遺憾；他動詞「落とす」要用「を」。'},
+ ['警察','どこで落としたかわかりますか。','知道在哪裡掉的嗎？'],
+ {c:[['駅から大学まで歩いている間に、落としたと思います。','我想是從車站走到大學的途中掉的。'],['駅で落とすつもりです。','我打算在車站弄丟。'],['どこで落としたかどうかです。','（不通順）']], fb:'「〜ている間に」＝在～的期間（某個時候）。'},
+ ['警察','どんな財布ですか。','是什麼樣的錢包？'],
+ {c:[['黒くて小さい財布です。中に学生証が入っています。','黑色的小錢包。裡面有學生證。'],['黒いで小さい財布です。','（文法錯誤）'],['財布みたいです。','好像是錢包。']], fb:'形容詞連接「黒くて小さい」。'},
+ ['警察','あ、さっき届いた財布かもしれません。……これですか。','啊，可能是剛剛有人送來的錢包。……是這個嗎？'],
+ {c:[['あっ、それです！ 見つかってよかった……。','啊，就是那個！找到真是太好了……。'],['それではないはずです。','應該不是那個。'],['見つけてもらいたかったです。','我本來想讓你找到。']], fb:'「〜てよかった」表達慶幸。'},
+ ['警察','中を確認してから、この紙にサインしてください。拾った人はお礼はいらないと言っていましたよ。','請確認裡面之後，在這張紙上簽名。撿到的人說不需要謝禮喔。'],
+ {q:'撿到錢包的人說了什麼？', c:[['不需要謝禮'],['想見林同學'],['錢包裡的錢少了']], fb:'お礼はいらない＝不需要謝禮。日本法律規定撿到者可以要求 5〜20% 的謝禮，但很多人會婉拒。'}
+]},
+{w:24, id:'sobetsu', place:'送別會', title:'送別会のスピーチ', goal:'在送別會上致詞告別', lines:[
+ ['櫻','林さん、来月帰国するんですよね。寂しくなります。','林同學，下個月就要回國了吧。會很寂寞的。'],
+ {c:[['ええ。でも、また必ず日本に来るつもりです。','嗯。不過我一定會再來日本的。'],['ええ。でも、また日本に来たことがあります。','（時態錯誤）'],['寂しくなりませんでした。','沒有變寂寞。']], fb:'「必ず〜つもりです」＝一定打算～。'},
+ ['櫻','じゃあ、最後に一言お願いします！','那最後請說幾句話！'],
+ {c:[['皆さん、一年間本当にお世話になりました。','各位，這一年來真的承蒙照顧了。'],['皆さん、お世話をしてあげました。','各位，我照顧了你們。（方向錯誤）'],['一言をお願いします。','請說一句話。']], fb:'告別時的固定說法：「お世話になりました」。'},
+ {c:[['日本に来たばかりのときは、日本語が全然わかりませんでした。','剛來日本的時候，日語完全聽不懂。'],['日本に来たところ、日本語がわかります。','（文法錯誤）'],['日本語が全然わかりました。','（全然要接否定）']], fb:'「〜たばかり」＝剛～不久；「全然」後面接否定。'},
+ {c:[['でも、皆さんが優しく教えてくれたので、話せるようになりました。','但是因為大家溫柔地教我，我變得會說了。'],['でも、皆さんに教えさせられたので、話せました。','（使役被動用錯）'],['でも、話せるようにしてください。','（意思不對）']], fb:'「〜てくれたので」表達感謝的原因；「〜ようになる」表達能力的變化。'},
+ {c:[['台湾に来たら、ぜひ連絡してください。今度は私が案内します！','來台灣的話一定要聯絡我。下次換我帶你們玩！'],['台湾に来れば、連絡しなければなりません。','來台灣的話必須聯絡。'],['台湾をご案内になります。','（敬語用錯）']], fb:'「〜たら」條件＋「ぜひ」熱情邀請。'},
+ ['大家','林さん、元気でね！ また会いましょう！','林同學，保重喔！再見面吧！']
+]}
+];
+
+// 閱讀測驗（讀解）
+const READING = [
+{lv:'N5', w:8, title:'わたしの 一日', text:'私は毎朝七時に起きます。朝ご飯はパンと牛乳です。八時に家を出て、電車で学校へ行きます。授業は九時から三時までです。学校の後で、図書館で二時間勉強します。晩ご飯は家族と食べます。夜は十一時ごろ寝ます。', qs:[
+ {q:'この人は学校の後で何をしますか。', c:['図書館で勉強します','家族と晩ご飯を食べます','電車で家に帰ります','パンを食べます'], a:0},
+ {q:'この人は何時に家を出ますか。', c:['八時','七時','九時','三時'], a:0}]},
+{lv:'N5', w:9, title:'メモ', text:'リンさんへ\n今日は雨ですから、テニスはやめましょう。かわりに、駅の前の喫茶店で会いませんか。三時に待っています。都合が悪いときは、電話してください。\nさくら', qs:[
+ {q:'さくらさんは今日、何をしたいですか。', c:['喫茶店で会う','テニスをする','駅で電話する','家で休む'], a:0},
+ {q:'リンさんが行けないときは、どうしますか。', c:['さくらさんに電話する','三時に駅へ行く','メモを書く','テニスをする'], a:0}]},
+{lv:'N5', w:10, title:'お知らせ', text:'図書館からのお知らせ\n来週の月曜日から水曜日まで、図書館は休みです。本を返すときは、入口の前の箱に入れてください。木曜日からは、いつもと同じで、朝九時から夜八時までです。', qs:[
+ {q:'図書館が休みの日に本を返したいです。どうしますか。', c:['入口の前の箱に入れる','木曜日まで待つ','受付に持っていく','先生に渡す'], a:0},
+ {q:'木曜日、図書館は何時に閉まりますか。', c:['夜八時','朝九時','夜九時','休みです'], a:0}]},
+{lv:'N5', w:11, title:'日本の友達', text:'日本に来て三か月になりました。最初は友達がいなくて、少しさびしかったです。でも、クラスのさくらさんがいつも話しかけてくれました。先週はさくらさんと鎌倉へ行きました。お寺がとてもきれいでした。来月は一緒に富士山を見に行きます。', qs:[
+ {q:'この人は日本に来たとき、どうでしたか。', c:['友達がいなくて、さびしかった','友達がたくさんいた','鎌倉に住んでいた','富士山に行った'], a:0},
+ {q:'来月、二人は何をしますか。', c:['富士山を見に行く','鎌倉のお寺へ行く','クラスで話す','日本に来る'], a:0}]},
+{lv:'N4', w:15, title:'ゴミの出し方', text:'このアパートに住んでいる皆さんへ\n最近、決められた日以外にゴミを出す人がいて、困っています。燃えるゴミは月曜日と木曜日、プラスチックは水曜日、缶とびんは第二・第四金曜日です。朝八時までに、建物の横のゴミ置き場に出してください。大きいゴミを捨てたい場合は、区役所に電話して申し込む必要があります。\n大家', qs:[
+ {q:'ペットボトル（プラスチック）はいつ出しますか。', c:['水曜日の朝八時までに','月曜日の夜に','第二金曜日の朝に','いつでもいい'], a:0},
+ {q:'古い机を捨てたいとき、どうしなければなりませんか。', c:['区役所に電話して申し込む','月曜日にゴミ置き場に出す','大家さんに渡す','建物の横に置いておく'], a:0}]},
+{lv:'N4', w:17, title:'アルバイト募集', text:'【アルバイト募集】カフェ「こもれび」\n時間：①7:00〜12:00 ②12:00〜17:00 ③17:00〜22:00\n時給：1,100円（③は1,250円）\n週2日からOK。日本語で簡単な会話ができる方。留学生も歓迎します。\n経験がなくても大丈夫です。最初の一週間は、先輩が丁寧に教えます。\n興味がある方は、店に電話するか、直接店員に声をかけてください。', qs:[
+ {q:'時給がいちばん高いのはどの時間ですか。', c:['17:00〜22:00','7:00〜12:00','12:00〜17:00','全部同じ'], a:0},
+ {q:'このアルバイトについて、正しいものはどれですか。', c:['経験がなくても働ける','週に五日働かなければならない','日本語が話せなくてもいい','留学生は働けない'], a:0}]},
+{lv:'N4', w:19, title:'メール', text:'林さん\n先日はお土産をありがとうございました。家族みんなで食べました。とてもおいしかったです。\nところで、来週の土曜日、うちでバーベキューをすることになりました。林さんもよかったら来ませんか。肉や野菜はこちらで用意するので、何も持ってこなくていいですよ。ただ、飲み物は各自持ってきてください。雨の場合は、日曜日に変わります。\n参加できるかどうか、水曜日までに返事をください。\n山田', qs:[
+ {q:'林さんはバーベキューに何を持っていきますか。', c:['自分の飲み物','肉と野菜','お土産','何も持っていかない'], a:0},
+ {q:'林さんは何をしなければなりませんか。', c:['水曜日までに返事をする','土曜日に肉を買う','日曜日に電話する','家族にお土産を渡す'], a:0}]},
+{lv:'N4', w:21, title:'日本の電車', text:'日本の電車はとても正確だと言われています。一分でも遅れると、駅でお詫びの放送が流れることもあります。私が初めて日本に来たとき、電車の中がとても静かなので驚きました。電話で話している人はほとんどいません。日本では、電車の中で電話をするのはマナー違反だと考えられているからです。最初は少し窮屈に感じましたが、今はこの静かさが好きになりました。', qs:[
+ {q:'この人は初めて日本の電車に乗ったとき、何に驚きましたか。', c:['電車の中が静かなこと','電車が遅れること','電話する人が多いこと','電車が狭いこと'], a:0},
+ {q:'この人の今の気持ちに合うものはどれですか。', c:['静かな電車が好きになった','まだ窮屈だと感じている','電車で電話したい','日本の電車は不正確だと思う'], a:0}]},
+{lv:'N4', w:23, title:'私の夢', text:'私は子供のころから絵をかくのが好きでした。高校生のとき、日本のアニメを見て、日本で絵の勉強をしたいと思うようになりました。両親は最初反対しましたが、私が毎日日本語を勉強しているのを見て、最後には「頑張りなさい」と言ってくれました。今は東京の専門学校で勉強しています。授業は大変ですが、将来は子供のための絵本を作る仕事がしたいです。', qs:[
+ {q:'両親はどうして最後に賛成しましたか。', c:['毎日日本語を勉強しているのを見たから','アニメが好きだったから','専門学校が近いから','絵が上手だったから'], a:0},
+ {q:'この人は将来、どんな仕事がしたいですか。', c:['子供のための絵本を作る仕事','アニメを作る仕事','日本語を教える仕事','専門学校の先生'], a:0}]},
+{lv:'N4', w:24, title:'お知らせ：防災訓練', text:'さくら町のみなさんへ\n11月10日（日）の朝10時から、さくら小学校で防災訓練を行います。地震が起きたときの逃げ方や、消火器の使い方を練習します。参加する方は、動きやすい服で来てください。申し込みは必要ありません。小学生以下の子供は、大人と一緒に参加してください。雨の場合は体育館で行います。\nさくら町内会', qs:[
+ {q:'防災訓練に参加したい人は、どうすればいいですか。', c:['動きやすい服で直接行く','事前に申し込む','体育館で待つ','消火器を持っていく'], a:0},
+ {q:'雨が降ったら、どうなりますか。', c:['体育館で行う','中止になる','次の日曜日になる','運動場で行う'], a:0}]}
+];
+
+</script>
+<script>
+(() => {
+'use strict';
+
+// ================= 路線與常數 =================
+const STATIONS = [null,
+ ['成田空港','なりたくうこう','Narita Kūkō'],['上野','うえの','Ueno'],['浅草','あさくさ','Asakusa'],
+ ['秋葉原','あきはばら','Akihabara'],['東京','とうきょう','Tōkyō'],['新宿','しんじゅく','Shinjuku'],['渋谷','しぶや','Shibuya'],
+ ['横浜','よこはま','Yokohama'],['鎌倉','かまくら','Kamakura'],['箱根','はこね','Hakone'],['富士山','ふじさん','Fujisan'],
+ ['名古屋','なごや','Nagoya'],['京都','きょうと','Kyōto'],['奈良','なら','Nara'],['大阪','おおさか','Ōsaka'],['神戸','こうべ','Kōbe'],
+ ['広島','ひろしま','Hiroshima'],['福岡','ふくおか','Fukuoka'],['長崎','ながさき','Nagasaki'],['金沢','かなざわ','Kanazawa'],
+ ['仙台','せんだい','Sendai'],['日光','にっこう','Nikkō'],['函館','はこだて','Hakodate'],['札幌','さっぽろ','Sapporo'],
+ ['小樽','おたる','Otaru'],['試験会場','しけんかいじょう','Shiken Kaijō']
+];
+const WEEK_TITLE = [null,
+ '平假名（清音）','濁音・拗音・數字','片假名・外來語',
+ '人與家人・指示詞','數字・時間・日期','飲食・購物','場所・交通・方向','日常動詞・て形','形容詞・顏色・天氣','學校・身體・家裡','副詞・疑問詞・N5 總整理',
+ '住居生活・可能形','時間・家族・て形補助','飲食料理・時間順序','身體健康・條件句','學校考試・義務許可','工作打工・授受表現','交通旅行・推測傳聞',
+ '購物手續・比較理由','自然天氣・名詞化','感情性格・使役被動','自他動詞・敬語','社交敬語・副詞','副詞接續・N4 總整理',
+ 'N5 模擬考・弱點複習','N4 模擬考・最後衝刺'
+];
+const lineOf = w => w<=3?'kana':w<=11?'n5':w<=24?'n4':'exam';
+const LINES = {kana:{code:'KN',name:'假名線'},n5:{code:'N5',name:'N5 本線'},n4:{code:'N4',name:'N4 本線'},exam:{code:'EX',name:'試驗特急'}};
+const lc = w => `var(--${lineOf(w)})`;
+const EXAM_DATE = Date.UTC(2027,6,4)/864e5; // 2027-07-04（週日，JLPT 7 月場次預計日期）
+const INTERVALS = [0,1,2,4,7,15,30,60,120];
+const PASS = 0.7;
+
+// ================= 工具 =================
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const shuffle = a => { a = a.slice(); for (let i=a.length-1;i>0;i--){ const j=Math.random()*(i+1)|0; [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const pick = (a,n) => shuffle(a).slice(0,n);
+const today = () => { const d=new Date(); return Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5); };
+const fmtDay = n => { const d=new Date(n*864e5); return `${d.getUTCMonth()+1}/${d.getUTCDate()}`; };
+const fmtDayFull = n => { const d=new Date(n*864e5); return `${d.getUTCFullYear()}.${d.getUTCMonth()+1}.${d.getUTCDate()}`; };
+const hasKanji = s => /[一-鿿々]/.test(s);
+const clean = s => String(s).replace(/〜/g,'').replace(/＿＿/g,'').trim();
+
+// ================= 假名與羅馬拼音 =================
+const H_BASE = 'あa いi うu えe おo かka きki くku けke こko さsa しshi すsu せse そso たta ちchi つtsu てte とto なna にni ぬnu ねne のno はha ひhi ふfu へhe ほho まma みmi むmu めme もmo やya ゆyu よyo らra りri るru れre ろro わwa をwo んn'.split(' ').map(x=>[x[0],x.slice(1)]);
+const H_DAKU = 'がga ぎgi ぐgu げge ごgo ざza じji ずzu ぜze ぞzo だda ぢji づzu でde どdo ばba びbi ぶbu べbe ぼbo'.split(' ').map(x=>[x[0],x.slice(1)]);
+const H_HANDAKU = 'ぱpa ぴpi ぷpu ぺpe ぽpo'.split(' ').map(x=>[x[0],x.slice(1)]);
+const H_YOON = 'きゃkya きゅkyu きょkyo しゃsha しゅshu しょsho ちゃcha ちゅchu ちょcho にゃnya にゅnyu にょnyo ひゃhya ひゅhyu ひょhyo みゃmya みゅmyu みょmyo りゃrya りゅryu りょryo ぎゃgya ぎゅgyu ぎょgyo じゃja じゅju じょjo びゃbya びゅbyu びょbyo ぴゃpya ぴゅpyu ぴょpyo'.split(' ').map(x=>[x.slice(0,2),x.slice(2)]);
+const K_EXTRA = 'ファfa フィfi フェfe フォfo ティti ディdi ウィwi ウェwe ウォwo シェshe ジェje チェche デュdyu ヴvu'.split(' ').map(x=>{const m=x.match(/^([^a-z]+)([a-z]+)$/);return [m[1],m[2]];});
+const toKata = s => s.replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0)+0x60));
+const toHira = s => s.replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0)-0x60));
+const ROMA = {};
+[...H_BASE,...H_DAKU,...H_HANDAKU,...H_YOON].forEach(([k,r])=>ROMA[k]=r);
+K_EXTRA.forEach(([k,r])=>ROMA[toHira(k)]=r);
+Object.assign(ROMA,{'ぁ':'a','ぃ':'i','ぅ':'u','ぇ':'e','ぉ':'o','を':'o','ゃ':'ya','ゅ':'yu','ょ':'yo'});
+const MACRON = {a:'ā',i:'ī',u:'ū',e:'ē',o:'ō'};
+function convRo(t){
+  let out='';
+  for (let i=0;i<t.length;){
+    const ch=t[i], two=t.slice(i,i+2);
+    if (ch==='っ'){ const nx=ROMA[t.slice(i+1,i+3)]||ROMA[t[i+1]]; if(nx){ out += nx.startsWith('ch')?'t':nx[0]; } i++; continue; }
+    if (ch==='ー'){ const last=out.slice(-1); if(MACRON[last]) out=out.slice(0,-1)+MACRON[last]; else out+='-'; i++; continue; }
+    if (ROMA[two]){ out+=ROMA[two]; i+=2; continue; }
+    if (ROMA[ch]){ out+=ROMA[ch]; i++; continue; }
+    out += ({'。':'. ','、':', ','？':'? ','！':'! ','〜':'~','・':' '}[ch] ?? ch); i++;
+  }
+  return out;
+}
+function toRomaji(str){
+  const s=toHira(String(str)); const multi=/\s/.test(s.trim());
+  return s.trim().split(/\s+/).map(tok=>{
+    if(/^(こんにち|こんばん)は/.test(tok)) return convRo(tok.replace(/は(?=[。、？！]?$)/,''))+'wa'+convRo(tok.match(/[。、？！]?$/)[0]);
+    if(multi){
+      const m=tok.match(/^(.*?)([はへ])([。、？！]?)$/);
+      if(m && tok!=='は' && tok!=='へ' && m[1]) return convRo(m[1])+(m[2]==='は'?' wa':' e')+convRo(m[3]);
+      if(tok==='は') return 'wa'; if(tok==='へ') return 'e';
+    }
+    return convRo(tok);
+  }).join(' ').replace(/\s+([.,?!])/g,'$1').trim();
+}
+const kanaOnly = s => /^[぀-ヿ\sー〜。、？！]+$/.test(s);
+
+// ================= 語音 =================
+let jaVoice = null;
+const canSpeak = 'speechSynthesis' in window;
+function loadVoices(){ if(!canSpeak) return; const vs=speechSynthesis.getVoices(); jaVoice = vs.find(v=>/^ja[-_]JP/i.test(v.lang)&&/google|kyoko|otoya|nanami|haruka|ayumi/i.test(v.name)) || vs.find(v=>/^ja/i.test(v.lang)) || null; }
+if (canSpeak){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+const listenOK = () => canSpeak && !!jaVoice;
+function speak(text, queue){
+  if(!canSpeak || !text) return;
+  try{
+    if(!queue) speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(clean(text).replace(/\s+/g,' '));
+    u.lang='ja-JP'; if(jaVoice) u.voice=jaVoice; u.rate=state.settings.rate||0.9;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+const ICON = {
+  speak:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="14" rx="4"/><path d="M5 10h14M9 14h.01M15 14h.01M8 21l2-4M16 21l-2-4"/></svg>',
+  map:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="5" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="6" cy="19" r="2"/><path d="M8 5h4a4 4 0 0 1 4 4v1M16 14v1a4 4 0 0 1-4 4H8"/></svg>',
+  review:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="13" height="15" rx="2"/><path d="M8 3h11a2 2 0 0 1 2 2v12"/><path d="M7 12l2 2 4-4"/></svg>',
+  talk:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h11a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H9l-4 3v-3H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/><path d="M19 9h1a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-1v2l-3-2"/></svg>',
+  me:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+  back:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>',
+  close:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>'
+};
+const speakBtn = (text, cls='') => canSpeak ? `<button class="speak ${cls}" data-speak="${esc(text)}" aria-label="播放發音">${ICON.speak}<span>${cls.includes('huge')?'播放語音':'發音'}</span></button>` : '';
+
+// ================= 建立課程資料 =================
+const D = { items:{}, weeks:[] };
+for (let w=1; w<=26; w++) D.weeks[w] = {kana:[], vocab:[], kanji:[], grammar:[]};
+function addItem(it){ if(D.items[it.id]) return null; D.items[it.id]=it; D.weeks[it.w][it.type].push(it); return it; }
+// 假名
+const KANA_GROUPS = {
+ 1:[['あ行〜さ行',H_BASE.slice(0,15),'日文有三種文字：平假名、片假名和漢字。平假名一共 46 個，是一切的基礎。先記住五個母音「あ い う え お」，其他假名都是子音＋母音。'],
+    ['た行〜は行',H_BASE.slice(15,30),'注意幾個特別的拼音：し＝shi、ち＝chi、つ＝tsu、ふ＝fu。「は」當助詞時唸 wa，「へ」當助詞時唸 e。'],
+    ['ま行〜ん',H_BASE.slice(30),'「を」只當助詞使用，發音和「お」一樣（o）。「ん」是鼻音，不會出現在字首。']],
+ 2:[['濁音',H_DAKU,'在假名右上角加上「゛」就變成濁音：か→が、さ→ざ、た→だ、は→ば。「ぢ」「づ」和「じ」「ず」發音相同，平常幾乎都用「じ」「ず」。'],
+    ['半濁音・拗音（上）',[...H_HANDAKU,...H_YOON.slice(0,15)],'は行加上「゜」就是半濁音：は→ぱ。拗音＝い段假名＋小的「ゃ ゅ ょ」，兩個字合成一拍：き＋ゃ＝きゃ（kya）。'],
+    ['拗音（下）・促音・長音',H_YOON.slice(15),'促音「っ」（小的つ）表示停頓一拍：きって kitte（郵票）。長音是把母音拉長一拍：おかあさん、おにいさん、とうきょう。這兩個規則會影響意思，聽力要特別注意！']],
+ 3:[['片假名 ア〜ト',H_BASE.slice(0,20).map(([k,r])=>[toKata(k),r]),'片假名主要用來寫外來語和外國地名、人名。發音跟平假名完全一樣，只是寫法不同。小心容易混淆的「シ／ツ」「ソ／ン」。'],
+    ['片假名 ナ〜ン',H_BASE.slice(20).map(([k,r])=>[toKata(k),r]),'片假名的長音用「ー」表示：コーヒー（kōhī）、ケーキ（kēki）。'],
+    ['片假名 濁音・半濁音',[...H_DAKU,...H_HANDAKU].map(([k,r])=>[toKata(k),r]),'規則和平假名一樣，加上「゛」「゜」。'],
+    ['外來語特殊音',K_EXTRA,'為了寫外來語，片假名有一些平假名沒有的組合：ファ（fa）、ティ（ti）、ウィ（wi）等等。例如 カフェ（咖啡廳）、パーティー（派對）。']]
+};
+for (const w of [1,2,3]) KANA_GROUPS[w].forEach(([,list]) => list.forEach(([k,r]) => addItem({id:(w===3?'K:':'H:')+k, type:'kana', w, jp:k, ro:r})));
+// 單字
+for (const w in VOCAB_RAW) VOCAB_RAW[w].trim().split('\n').forEach(line => {
+  const [jp,rd,zh] = line.split(';'); if(!jp||!zh) return;
+  addItem({id:'v:'+jp, type:'vocab', w:+w, jp, rd:rd||jp, zh});
+});
+// 漢字
+for (const w in KANJI_RAW) KANJI_RAW[w].trim().split('\n').forEach(line => {
+  const [k,on,kun,zh,ex,exr,exz] = line.split(';');
+  addItem({id:'j:'+k, type:'kanji', w:+w, jp:k, on, kun, zh, ex, exr, exz});
+});
+// 文法
+for (const w in GRAMMAR_RAW) GRAMMAR_RAW[w].forEach((g,i) => addItem({id:`g:${w}-${i+1}`, type:'grammar', w:+w, ...g}));
+
+// 會話中的聽力題
+const LISTEN = [];
+CONVO.forEach(sc => {
+  let lastNpc=null;
+  sc.lines.forEach(ln => {
+    if (Array.isArray(ln)){ if(ln[0]!=='你') lastNpc=ln; return; }
+    if (!lastNpc) return;
+    if (ln.q) LISTEN.push({w:sc.w, kind:'q', audio:lastNpc[1], tr:lastNpc[2], q:ln.q, opts:ln.c.map(c=>c[0]), ans:0, fb:ln.fb});
+    else if (ln.c) LISTEN.push({w:sc.w, kind:'resp', audio:lastNpc[1], tr:lastNpc[2], q:'聽完對方說的話，最適當的回應是？', opts:ln.c.map(c=>c[0]), okSet:ln.ok||[0], ans:(ln.ok||[0])[0], fb:ln.fb});
+  });
+});
+
+// 每週的課程
+function chunk(arr, size){ if(!arr.length) return []; const n=Math.ceil(arr.length/size), s=Math.ceil(arr.length/n), out=[]; for(let i=0;i<arr.length;i+=s) out.push(arr.slice(i,i+s)); return out; }
+const LESSON_CACHE = {};
+function weekLessons(w){
+  if (LESSON_CACHE[w]) return LESSON_CACHE[w];
+  const W=D.weeks[w], L=[];
+  if (w<=3){
+    KANA_GROUPS[w].forEach(([title,list,note],i) => L.push({id:`${w}-a${i+1}`, w, type:'learn', kind:'kana', title, items:list.map(([k])=>D.items[(w===3?'K:':'H:')+k]), note}));
+    chunk(W.vocab, 16).forEach((items,i) => L.push({id:`${w}-v${i+1}`, w, type:'learn', kind:'vocab', title: w===1?'招呼語':w===2?'數字與救命句':'外來語與實用句', items}));
+  } else if (w<=24){
+    const K=chunk(W.kanji,14).map((items,i)=>({id:`${w}-k${i+1}`, w, type:'learn', kind:'kanji', title:'漢字 '+items.map(x=>x.jp).join(''), items}));
+    const V=chunk(W.vocab,20).map((items,i,a)=>({id:`${w}-v${i+1}`, w, type:'learn', kind:'vocab', title:`單字 ${i+1}/${a.length}`, items}));
+    const G=chunk(W.grammar,6).map((items,i,a)=>({id:`${w}-g${i+1}`, w, type:'learn', kind:'grammar', title:`文法 ${i+1}/${a.length}`, items}));
+    const order=[...K];
+    for (let i=0;i<Math.max(V.length,G.length);i++){ if(V[i]) order.push(V[i]); if(G[i]) order.push(G[i]); }
+    L.push(...order);
+    READING.filter(r=>r.w===w).forEach((r,i)=>L.push({id:`${w}-r${i+1}`, w, type:'reading', title:'閱讀：'+r.title, passages:[r]}));
+  }
+  CONVO.filter(c=>c.w===w).forEach(c=>L.push({id:`${w}-c`, w, type:'convo', title:'會話：'+c.title, convo:c}));
+  if (w<=24) L.push({id:`${w}-t`, w, type:'test', title:'週測驗（過站考）'});
+  if (w===25) L.push(
+    {id:'25-weak', w, type:'weak', title:'弱點複習：最常錯的 30 題'},
+    {id:'25-m5', w, type:'mock', level:'N5', title:'N5 模擬考'},
+    {id:'25-r4', w, type:'reading', title:'N4 閱讀總練習', passages:READING.filter(r=>r.lv==='N4')},
+    {id:'25-m4a', w, type:'mock', level:'N4', title:'N4 模擬考 第 1 回'});
+  if (w===26) L.push(
+    {id:'26-m4b', w, type:'mock', level:'N4', title:'N4 模擬考 第 2 回'},
+    {id:'26-weak', w, type:'weak', title:'弱點總複習'},
+    {id:'26-final', w, type:'final', title:'最後衝刺：全範圍 40 題'});
+  return LESSON_CACHE[w]=L;
+}
+const LESSON_BY_ID = {};
+for (let w=1; w<=26; w++) weekLessons(w).forEach(l=>LESSON_BY_ID[l.id]=l);
+const lessonIcon = l => ({kana:'あ',kanji:'漢',vocab:'語',grammar:'文'}[l.kind] || {reading:'讀',convo:'話',test:'測',mock:'模',weak:'弱',final:'終'}[l.type]);
+const lessonDesc = l => {
+  if (l.type==='learn') return `${l.items.length} 個${{kana:'假名',kanji:'漢字',vocab:'單字・句子',grammar:'文法點'}[l.kind]}`;
+  return {reading:'看文章回答問題', convo:l.convo?.goal, test:`隨機出題，答對 ${PASS*100}% 以上即可過站`, mock:l.level==='N5'?'文字語彙・文法・讀解・聽解，約 50 分鐘':'文字語彙・文法・讀解・聽解，約 70 分鐘', weak:'從你答錯過的題目中挑選', final:'從所有學過的內容隨機出題'}[l.type]||'';
+};
+
+// ================= 狀態與同步 =================
+const LS_KEY='jp-jukan-v1';
+const freshState = () => ({v:1, start:today(), xp:0, streak:0, best:0, lastDay:null, days:{}, lessons:{}, weeks:{}, srs:{}, convo:{}, exams:[], settings:{romaji:'auto', rate:0.9, zh:true, autoplay:true, unlockAll:false, reviewMax:60, goal:150}, updated:0});
+function migrate(s){ const f=freshState(); if(!s||typeof s!=='object') return f; const o={...f,...s}; o.settings={...f.settings,...(s.settings||{})}; return o; }
+let state = migrate((()=>{ try{ return JSON.parse(localStorage.getItem(LS_KEY)); }catch(e){ return null; } })());
+const cloud = {ref:null, status:'local', writing:null, pending:false, timer:null};
+function saveLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
+function save(){ state.updated=Date.now(); saveLocal(); if(cloud.ref){ clearTimeout(cloud.timer); cloud.timer=setTimeout(pushCloud, 2500); } }
+function pushCloud(){
+  if (!cloud.ref) return;
+  if (cloud.writing){ cloud.pending=true; return; }
+  clearTimeout(cloud.timer);
+  cloud.status='syncing'; renderChip();
+  const payload={s:JSON.stringify(state), updated:state.updated};
+  cloud.writing = cloud.ref.set(payload).then(()=>{ cloud.status='ok'; }).catch(e=>{
+    if (e && e.code==='unavailable'){ cloud.status='err'; setTimeout(()=>{ if(!cloud.writing) pushCloud(); }, 3000+Math.random()*2000); }
+    else if (e && (e.code==='invalid_argument'||e.code==='revoked'||e.code==='not_granted')){ cloud.status='local'; cloud.ref=null; }
+    else cloud.status='err';
+  }).finally(()=>{ cloud.writing=null; renderChip(); if(cloud.pending){ cloud.pending=false; pushCloud(); } });
+}
+async function pullCloud(){
+  if (!cloud.ref || S || C) return;
+  try{
+    const snap=await cloud.ref.get();
+    if (snap.exists){ const r=snap.data(); if(r && r.updated>state.updated){ state=migrate(JSON.parse(r.s)); saveLocal(); render(); toast('已載入其他裝置的最新進度'); } }
+  }catch(e){}
+}
+async function initCloud(){
+  if (!window.claude || !window.claude.use){ cloud.status='local'; renderChip(); return; }
+  try{
+    const [db,user]=await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+    if (!db || !user){ cloud.status='local'; renderChip(); return; }
+    const uid=await user.id();
+    if (!uid){ cloud.status='local'; renderChip(); return; }
+    cloud.ref=db.doc('data/users/'+uid+'/progress');
+    cloud.status='syncing'; renderChip();
+    const snap=await cloud.ref.get();
+    const r=snap.exists?snap.data():null;
+    if (r && r.updated>state.updated){ state=migrate(JSON.parse(r.s)); saveLocal(); cloud.status='ok'; if(!S && !C) render(); toast('已從雲端載入你的學習進度'); }
+    else if (state.updated>0 && (!r || state.updated>r.updated)) pushCloud();
+    else cloud.status='ok';
+    renderChip();
+    document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') pullCloud(); else if(cloud.ref && state.updated) pushCloud(); });
+  }catch(e){ cloud.status='local'; cloud.ref=null; renderChip(); }
+}
+
+// ================= 進度計算 =================
+const isPassed = w => !!state.weeks[w]?.passed;
+const isUnlocked = w => w===1 || state.settings.unlockAll || isPassed(w-1);
+function curWeek(){ for (let w=1; w<=26; w++) if(!isPassed(w)) return isUnlocked(w)?w:Math.max(1,w-1); return 26; }
+const lessonDone = id => !!state.lessons[id]?.done;
+const weekProgress = w => { const L=weekLessons(w); return {done:L.filter(l=>lessonDone(l.id)).length, total:L.length}; };
+const learnedIds = () => Object.keys(state.srs).filter(id=>D.items[id]);
+const dueIds = () => { const t=today(); return learnedIds().filter(id=>state.srs[id][1]<=t).sort((a,b)=>state.srs[a][1]-state.srs[b][1]); };
+const mastered = type => learnedIds().filter(id=>D.items[id].type===type && state.srs[id][0]>=5).length;
+const showRomaji = () => state.settings.romaji==='always' || (state.settings.romaji==='auto' && curWeek()<=4);
+const level = () => Math.floor(Math.sqrt(state.xp/30))+1;
+const levelXP = l => 30*(l-1)*(l-1);
+const trainClass = l => l<=3?'各駅停車':l<=7?'快速':l<=12?'急行':l<=18?'特急':l<=25?'新幹線こだま':l<=31?'新幹線ひかり':'新幹線のぞみ';
+function award(xp, extra={}){
+  const t=today(); const d=state.days[t]||(state.days[t]={xp:0,q:0,l:0});
+  if (state.lastDay!==t){ state.streak = state.lastDay===t-1 ? state.streak+1 : 1; state.best=Math.max(state.best,state.streak); state.lastDay=t; }
+  d.xp+=xp; d.q+=extra.q||0; d.l+=extra.l||0; state.xp+=xp;
+}
+function srsSet(id, box, due){ const s=state.srs[id]||[0,today(),0,0]; s[0]=box; s[1]=due; s[3]=today(); state.srs[id]=s; }
+function srsAnswer(id, correct){
+  const s=state.srs[id]||[0,today(),0,0];
+  if (correct){ s[0]=Math.min(s[0]+1,INTERVALS.length-1); s[1]=today()+INTERVALS[s[0]]; }
+  else { s[2]++; s[0]=1; s[1]=today(); }
+  s[3]=today(); state.srs[id]=s;
+}
+
+// ================= 出題 =================
+const byType = t => Object.values(D.items).filter(x=>x.type===t);
+const POOL = {kana:byType('kana'), vocab:byType('vocab'), kanji:byType('kanji'), grammar:byType('grammar')};
+function distract(item, key, n=3, filter){
+  const ans=key(item), seen=new Set([ans]), out=[];
+  const near = POOL[item.type].filter(x=>Math.abs(x.w-item.w)<=4);
+  for (const pool of [shuffle(near), shuffle(POOL[item.type])]){
+    for (const x of pool){ if(out.length>=n) break; const k=key(x); if(x===item||seen.has(k)||(filter&&!filter(x))) continue; seen.add(k); out.push(k); }
+  }
+  return out;
+}
+function mkOpts(answer, others, jp){ const opts=shuffle([answer,...others]); return {opts:opts.map(t=>({t, jp})), ans:opts.indexOf(answer)}; }
+function roHtml(kana){ return showRomaji() ? `<div class="ro">${esc(toRomaji(kana))}</div>` : `<button class="reveal" data-reveal="${esc(toRomaji(kana))}">顯示拼音</button>`; }
+function makeQ(item, mode){
+  const q = {item, mode};
+  if (item.type==='kana'){
+    mode = mode || pick(listenOK()?['k2ro','k2ro','ro2k','audio']:['k2ro','k2ro','ro2k'],1)[0];
+    const ro=x=>x.ro, sameScript=x=>(x.id[0]===item.id[0]);
+    if (mode==='ro2k'){ Object.assign(q, {ask:'哪一個假名唸作：', big:`<div class="big">${esc(item.ro)}</div>`, ...mkOpts(item.jp, distract(item,x=>x.jp,3,x=>sameScript(x)&&x.ro!==item.ro), true), speak:item.jp}); }
+    else if (mode==='audio'){ Object.assign(q, {ask:'聽發音，選出正確的假名', big:speakBtn(item.jp,'huge'), autoplay:item.jp, ...mkOpts(item.jp, distract(item,x=>x.jp,3,x=>sameScript(x)&&x.ro!==item.ro), true)}); }
+    else { Object.assign(q, {ask:'這個假名怎麼唸？', big:`<div class="big kana-only">${esc(item.jp)}</div>`, ...mkOpts(item.ro, distract(item,ro), false), speak:item.jp}); }
+    q.explain = `<span class="jp">${esc(item.jp)}</span> ＝ ${esc(item.ro)}`;
+  }
+  else if (item.type==='vocab'){
+    const kanjiWord = hasKanji(item.jp);
+    const modes=['jp2zh','jp2zh','zh2jp']; if(kanjiWord) modes.push('reading','reading'); if(listenOK()) modes.push('audio');
+    mode = mode || pick(modes,1)[0]; if(mode==='reading' && !kanjiWord) mode='jp2zh';
+    const sent = item.jp.length>9 || /\s/.test(item.jp);
+    const bigJp = `<div class="big ${sent?'sent':''} jp" style="${sent?'text-align:center':''}">${esc(item.jp)}</div>`;
+    const rdLine = kanjiWord ? `<div class="rd">${esc(item.rd)}</div>` : '';
+    const roLine = kanaOnly(item.rd) ? roHtml(item.rd) : '';
+    if (mode==='zh2jp'){ Object.assign(q, {ask:'日文怎麼說？', big:`<div class="zhbig">${esc(item.zh)}</div>`, ...mkOpts(item.jp, distract(item,x=>x.jp), true)}); }
+    else if (mode==='reading'){ Object.assign(q, {ask:'這個詞怎麼唸？', big:bigJp+`<div class="ro">${esc(item.zh)}</div>`, ...mkOpts(item.rd, distract(item,x=>x.rd,3,x=>hasKanji(x.jp)), true)}); }
+    else if (mode==='audio'){ Object.assign(q, {ask:'聽發音，選出正確的意思', big:speakBtn(item.rd,'huge'), autoplay:item.rd, ...mkOpts(item.zh, distract(item,x=>x.zh), false)}); }
+    else { Object.assign(q, {ask:'這是什麼意思？', big:bigJp+rdLine+roLine, ...mkOpts(item.zh, distract(item,x=>x.zh), false)}); }
+    q.speak=item.rd;
+    q.explain = `<span class="jp">${esc(item.jp)}</span>${kanjiWord?`（<span class="jp">${esc(item.rd)}</span>）`:''} ＝ ${esc(item.zh)}`;
+  }
+  else if (item.type==='kanji'){
+    mode = mode || pick(['k2zh','ex2rd','ex2rd','exzh'],1)[0];
+    if (mode==='ex2rd'){ Object.assign(q, {ask:'這個詞怎麼唸？', big:`<div class="big jp">${esc(item.ex)}</div><div class="ro">${esc(item.exz)}</div>`, ...mkOpts(item.exr, distract(item,x=>x.exr), true), speak:item.exr}); }
+    else if (mode==='exzh'){ Object.assign(q, {ask:'這個詞是什麼意思？', big:`<div class="big jp">${esc(item.ex)}</div><div class="rd">${esc(item.exr)}</div>`, ...mkOpts(item.exz, distract(item,x=>x.exz), false), speak:item.exr}); }
+    else { Object.assign(q, {ask:'這個漢字的意思是？', big:`<div class="big kana-only jp" style="font-weight:500">${esc(item.jp)}</div>`, ...mkOpts(item.zh, distract(item,x=>x.zh), false), speak:item.exr}); }
+    q.explain = `<span class="jp">${esc(item.jp)}</span>：${esc(item.zh)}　音 ${esc(item.on)}／訓 ${esc(item.kun)}<br>例：<span class="jp">${esc(item.ex)}（${esc(item.exr)}）</span>＝${esc(item.exz)}`;
+  }
+  else if (item.type==='grammar'){
+    const s = esc(item.q).replace('＿＿','<u style="text-decoration-thickness:2px;text-underline-offset:5px">　　　</u>');
+    Object.assign(q, {ask:'選出最適當的答案', big:`<div class="big sent jp">${s}</div>`, ...mkOpts(item.a, shuffle(item.d).slice(0,3), true), speak:item.ex});
+    q.explain = `<b>${esc(item.t)}</b>：${esc(item.m)}<div class="ex"><span class="jp">${esc(item.ex)}</span><br>${esc(item.zh)}</div>`;
+  }
+  return q;
+}
+function readingQs(passage){
+  return passage.qs.map(rq => { const o=mkOpts(rq.c[rq.a], rq.c.filter((_,i)=>i!==rq.a), true);
+    return {passage, ask:'閱讀文章回答問題', big:`<div class="big sent jp" style="font-size:18px">${esc(rq.q)}</div>`, ...o, explain:`正確答案：<span class="jp">${esc(rq.c[rq.a])}</span>`, section:'讀解'}; });
+}
+function listenQ(L){
+  const ok=new Set((L.okSet||[0]).map(i=>L.opts[i]));
+  const order=shuffle(L.opts);
+  const useAudio=listenOK();
+  return {listen:L, ask:L.q, big: useAudio ? speakBtn(L.audio,'huge') : `<div class="small muted">此裝置沒有日語語音，改用文字：</div><div class="big sent jp" style="text-align:center">${esc(L.audio)}</div>`,
+    autoplay: useAudio?L.audio:null, opts:order.map(t=>({t, jp:L.kind==='resp'})), ans:order.findIndex(t=>ok.has(t)), okIdx:order.map((t,i)=>ok.has(t)?i:-1).filter(i=>i>=0),
+    explain:`<span class="jp">${esc(L.audio)}</span><br>${esc(L.tr)}<div class="ex">${esc(L.fb||'')}</div>`, section:'聽解'};
+}
+
+// ================= 學習／測驗工作階段 =================
+let S=null;  // 題目工作階段
+let C=null;  // 會話工作階段
+let VIEW={name:'home'}; const STACK=[];
+function go(name, params={}){ if(VIEW.name!==name || JSON.stringify(VIEW)!==JSON.stringify({name,...params})) STACK.push(VIEW); VIEW={name,...params}; S=null; C=null; window.scrollTo(0,0); render(); }
+function back(){ S=null; C=null; VIEW=STACK.pop()||{name:'home'}; window.scrollTo(0,0); render(); }
+function tab(name){ STACK.length=0; VIEW={name}; S=null; C=null; window.scrollTo(0,0); render(); }
+
+function startLesson(id){
+  const l=LESSON_BY_ID[id]; if(!l) return;
+  if (l.type==='learn'){
+    const quiz = shuffle(l.items).map(it => makeQ(it, it.type==='grammar'?'lesson':it.type==='vocab'?pick(['jp2zh','jp2zh','zh2jp'],1)[0]:it.type==='kanji'?'k2zh':'k2ro'));
+    beginSession({kind:'lesson', lesson:l, title:l.title, learn:l.items, queue:quiz});
+  } else if (l.type==='reading'){
+    beginSession({kind:'reading', lesson:l, title:l.title, queue:l.passages.flatMap(readingQs)});
+  } else if (l.type==='convo'){ startConvo(l.convo, l); }
+  else if (l.type==='test'){
+    const W=D.weeks[l.w]; const items=[...W.kana,...W.vocab,...W.kanji,...W.grammar];
+    let qs = pick(items, 18).map(it=>makeQ(it));
+    const L = LISTEN.filter(x=>x.w===l.w); if(L.length) qs.push(...pick(L,2).map(listenQ));
+    beginSession({kind:'test', lesson:l, title:l.title, queue:shuffle(qs)});
+  }
+  else if (l.type==='mock') startMock(l);
+  else if (l.type==='weak' || l.type==='final') startPractice(l.type, l);
+}
+function startPractice(kind, l){
+  let ids = learnedIds();
+  if (kind==='weak'){ const weak=ids.filter(id=>state.srs[id][2]>0||state.srs[id][0]<=2).sort((a,b)=>state.srs[b][2]-state.srs[a][2]); ids = weak.length>=10?weak.slice(0,30):pick(ids,30); }
+  else ids = pick(ids, 40);
+  if (!ids.length){ toast('還沒有學過的內容，先去上第一課吧！'); return; }
+  beginSession({kind:'practice', lesson:l, title:l?.title||'練習', queue:shuffle(ids).map(id=>makeQ(D.items[id]))});
+}
+function startReview(){
+  const ids=dueIds().slice(0, state.settings.reviewMax);
+  if (!ids.length){ toast('目前沒有要複習的卡片'); return; }
+  beginSession({kind:'review', title:'今日複習', queue:ids.map(id=>makeQ(D.items[id]))});
+}
+function startMock(l){
+  const n4=l.level==='N4';
+  const lvW = it => n4 ? true : it.w<=11;
+  const vPool = POOL.vocab.filter(x=>x.w>=4 && (n4? (x.w>=12 || Math.random()<.3) : x.w<=11) && hasKanji(x.jp));
+  const vocabQ = pick(vPool, n4?25:20).map((it,i)=>{ const q=makeQ(it, i%3===0?'zh2jp':i%3===1?'reading':'jp2zh'); q.section='文字・語彙'; return q; });
+  const gPool = POOL.grammar.filter(x=> n4 ? (x.w>=12 || Math.random()<.25) : x.w<=11);
+  const gramQ = pick(gPool, n4?20:15).map(it=>{ const q=makeQ(it); q.section='文法'; return q; });
+  const rd = pick(READING.filter(r=>r.lv===l.level), n4?3:2).flatMap(readingQs);
+  const lsPool = LISTEN.filter(x=> n4 ? x.w>=4 : x.w<=11);
+  const lisQ = pick(lsPool, n4?12:10).map(listenQ);
+  beginSession({kind:'mock', lesson:l, title:l.title, level:l.level, queue:[...vocabQ,...gramQ,...rd,...lisQ], timeLimit:(n4?70:50)*60, startedAt:Date.now()});
+}
+function beginSession(cfg){
+  STACK.push(VIEW); VIEW={name:'session'}; C=null;
+  S={...cfg, phase: cfg.learn?.length?'learn':'quiz', li:0, qi:0, picked:null, correct:0, answered:0, wrong:[], requeued:new Set(), firstWrong:new Set(), answers:[], xp:0};
+  window.scrollTo(0,0); render();
+}
+function answer(i){
+  if (!S || S.picked!==null) return;
+  const q=S.queue[S.qi]; S.picked=i;
+  const ok = q.okIdx ? q.okIdx.includes(i) : i===q.ans;
+  const isRe = S.requeued.has(S.qi);
+  if (S.kind==='mock'){ S.answers.push({q,ok,i}); if(ok) S.correct++; S.answered++; next(); return; }
+  if (!isRe){ S.answered++; if(ok){ S.correct++; S.xp+=2; } else { S.wrong.push(q); } }
+  if (q.item){
+    if (S.kind==='review' || S.kind==='practice'){ if(!isRe) srsAnswer(q.item.id, ok); else if(ok) srsSet(q.item.id, 1, today()+1); }
+    if (!ok) S.firstWrong.add(q.item.id);
+    if (!ok && !isRe && S.kind!=='test'){ const nq=makeQ(q.item, q.item.type==='grammar'?'lesson':undefined); S.queue.push(nq); S.requeued.add(S.queue.length-1); }
+  }
+  if (ok && !isRe) award(2,{q:1}); else if(!isRe) award(0,{q:1});
+  if (q.speak && ok && (q.item?.type!=='grammar')) speak(q.speak);
+  render();
+}
+function next(){
+  if (!S) return;
+  S.picked=null;
+  if (S.qi < S.queue.length-1){ S.qi++; render(); maybeAutoplay(); return; }
+  finishSession();
+}
+function maybeAutoplay(){ const q=S?.queue[S.qi]; if(q && q.autoplay && S.phase==='quiz') setTimeout(()=>speak(q.autoplay), 250); }
+function finishSession(){
+  const s=S; s.phase='result';
+  const acc = s.answered ? s.correct/s.answered : 0;
+  const L=s.lesson; let msg='';
+  if (s.kind==='lesson'){
+    const first=!lessonDone(L.id);
+    s.items = L.items;
+    L.items.forEach(it=>{ if(!state.srs[it.id]) srsSet(it.id, s.firstWrong.has(it.id)?0:1, s.firstWrong.has(it.id)?today():today()+1); else if(s.firstWrong.has(it.id)) state.srs[it.id][1]=today(); });
+    state.lessons[L.id]={done:true, best:Math.max(acc, state.lessons[L.id]?.best||0)};
+    award(first?15:5,{l:1}); s.xp+=first?15:5;
+  }
+  else if (s.kind==='reading'){ state.lessons[L.id]={done:true, best:Math.max(acc, state.lessons[L.id]?.best||0)}; award(10,{l:1}); s.xp+=10; }
+  else if (s.kind==='test'){
+    state.lessons[L.id]={done: acc>=PASS || lessonDone(L.id), best:Math.max(acc, state.lessons[L.id]?.best||0)};
+    s.wrong.forEach(q=>{ if(q.item && state.srs[q.item.id]) state.srs[q.item.id][1]=today(); });
+    if (acc>=PASS){
+      const wasPassed=isPassed(L.w);
+      state.weeks[L.w]={passed:true, score:Math.max(acc, state.weeks[L.w]?.score||0), date: state.weeks[L.w]?.date||today()};
+      if (!wasPassed){ award(100,{l:1}); s.xp+=100; s.stamp=true; }
+    }
+  }
+  else if (s.kind==='mock'){
+    const secA = s.answers.filter(a=>a.q.section!=='聽解'), secB=s.answers.filter(a=>a.q.section==='聽解');
+    const A=Math.round(120*secA.filter(a=>a.ok).length/Math.max(1,secA.length)), B=Math.round(60*secB.filter(a=>a.ok).length/Math.max(1,secB.length));
+    const need = s.level==='N4'?90:80;
+    s.score={A,B,total:A+B,pass:(A+B)>=need && A>=38 && B>=19, need, secs:['文字・語彙','文法','讀解','聽解'].map(n=>{const a=s.answers.filter(x=>x.q.section===n);return [n,a.filter(x=>x.ok).length,a.length];})};
+    s.wrong = s.answers.filter(a=>!a.ok).map(a=>a.q);
+    state.exams.push({level:s.level, id:L.id, day:today(), A, B, total:A+B, pass:s.score.pass});
+    state.lessons[L.id]={done:true, best:Math.max(A+B, state.lessons[L.id]?.best||0)};
+    award(50,{l:1}); s.xp+=50;
+    // 第 25、26 站的過站條件
+    const w25 = lessonDone('25-m5') && lessonDone('25-m4a');
+    if (w25 && !isPassed(25)){ state.weeks[25]={passed:true, score:1, date:today()}; s.stamp=true; }
+    if (s.level==='N4' && s.score.pass && isPassed(25) && !isPassed(26)){ state.weeks[26]={passed:true, score:(A+B)/180, date:today()}; s.stamp=true; }
+  }
+  else if (s.kind==='practice' && L){ state.lessons[L.id]={done:true, best:Math.max(acc, state.lessons[L.id]?.best||0)}; award(10,{l:1}); s.xp+=10; }
+  save(); render();
+  if (s.stamp) setTimeout(()=>speak(STATIONS[L.w][1]), 300);
+}
+
+// ================= 會話 =================
+function startConvo(sc, l){
+  STACK.push(VIEW); VIEW={name:'convo'}; S=null;
+  C={sc, l, i:0, shown:[], pending:null, picked:null, first:0, total:0, done:false, zh:state.settings.zh, choiceOrder:null};
+  advanceConvo(); window.scrollTo(0,0);
+}
+function advanceConvo(){
+  if (!C) return;
+  C.pending=null; C.picked=null;
+  while (C.i < C.sc.lines.length){
+    const ln=C.sc.lines[C.i];
+    if (Array.isArray(ln)){
+      C.shown.push({who:ln[0], jp:ln[1], zh:ln[2], me:ln[0]==='你'}); C.i++;
+      if (ln[0]!=='你' && state.settings.autoplay) speak(ln[1], true);
+      if (ln[0]!=='你'){ const nxt=C.sc.lines[C.i]; if(nxt && Array.isArray(nxt) && nxt[0]!=='你'){ break; } }
+      continue;
+    }
+    C.pending=ln; C.choiceOrder=shuffle(ln.c.map((_,k)=>k)); C.total++; break;
+  }
+  if (!C.pending && C.i>=C.sc.lines.length) finishConvo();
+  render(); setTimeout(()=>{ const el=document.querySelector('.chat-end'); el && el.scrollIntoView({block:'end', behavior:'smooth'}); }, 30);
+}
+function convoPick(k){
+  if (!C || !C.pending || C.picked!==null) return;
+  const ln=C.pending, ok=(ln.ok||[0]).includes(k);
+  C.picked=k; if(ok) C.first++;
+  award(ok?3:0,{q:1});
+  render();
+}
+function convoContinue(){
+  if (!C) return;
+  const ln=C.pending;
+  if (ln && C.picked!==null){
+    const ok=(ln.ok||[0]).includes(C.picked); const k= ok ? C.picked : (ln.ok||[0])[0];
+    if (!ln.q){ C.shown.push({who:'你', jp:ln.c[k][0], zh:ln.c[k][1], me:true}); speak(ln.c[k][0]); }
+    C.i++;
+  } else if (!ln && C.i<C.sc.lines.length) {}
+  advanceConvo();
+}
+function finishConvo(){
+  if (C.done) return; C.done=true;
+  const id=C.sc.id; const acc=C.total?C.first/C.total:1;
+  state.convo[id]=Math.max(acc, state.convo[id]||0);
+  if (C.l) state.lessons[C.l.id]={done:true, best:Math.max(acc, state.lessons[C.l.id]?.best||0)};
+  award(20,{l:1}); save();
+}
+
+// ================= 畫面 =================
+function toast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(), 2600); }
+function renderChip(){
+  const el=$('#sync'); if(!el) return;
+  const m={ok:['ok','雲端已同步'],syncing:['warn','同步中…'],err:['warn','同步暫時失敗'],local:['','僅存在此裝置']}[cloud.status]||['','僅存在此裝置'];
+  el.className='chip '+m[0]; el.innerHTML=`<span class="dot"></span>${m[1]}`;
+}
+function topbar(title, withBack){
+  return `<header class="topbar">${withBack?`<button class="back" data-act="back">${ICON.back}返回</button>`:`<div class="brand"><span class="mark" aria-hidden="true"></span>日語縱貫線</div>`}
+  <div class="grow">${title?`<b>${esc(title)}</b>`:''}</div><span id="sync" class="chip"></span></header>`;
+}
+function ekimei(w, extra=''){
+  const st=STATIONS[w], prev=STATIONS[w-1], nx=STATIONS[w+1], ln=LINES[lineOf(w)];
+  return `<div class="ekimei" style="--lc:${lc(w)}">
+   <div class="body"><div class="code"><small>${ln.code}</small><b>${String(w).padStart(2,'0')}</b></div>
+   <div class="kana">${esc(st[1])}</div><div class="kanji">${esc(st[0])}</div><div class="ro">${esc(st[2])}</div></div>
+   <div class="stripe"><span>${prev?'◀ '+esc(prev[0]):'起點'}</span><span>${nx?esc(nx[0])+' ▶':'終點'}</span></div>${extra}</div>`;
+}
+function navHTML(){
+  const due=dueIds().length; const n=VIEW.name;
+  const tabs=[['home','今日',ICON.home],['map','路線',ICON.map],['review','複習',ICON.review],['talk','會話',ICON.talk],['me','我的',ICON.me]];
+  const map={home:'home',week:'map',map:'map',review:'review',talk:'talk',me:'me',dict:'me',settings:'me'};
+  return `<div class="in">${tabs.map(([k,l,ic])=>`<button data-tab="${k}" class="${map[n]===k?'on':''}" aria-label="${l}">${ic}<span>${l}</span>${k==='review'&&due?`<span class="badge num">${due>99?'99+':due}</span>`:''}</button>`).join('')}</div>`;
+}
+function render(){
+  const app=$('#app'), nav=$('#nav');
+  const inSession = VIEW.name==='session' || VIEW.name==='convo';
+  nav.hidden = inSession;
+  let html='';
+  try{
+    switch(VIEW.name){
+      case 'home': html=viewHome(); break;
+      case 'map': html=viewMap(); break;
+      case 'week': html=viewWeek(VIEW.w); break;
+      case 'review': html=viewReview(); break;
+      case 'talk': html=viewTalk(); break;
+      case 'me': html=viewMe(); break;
+      case 'dict': html=viewDict(); break;
+      case 'settings': html=viewSettings(); break;
+      case 'session': html=S?viewSession():viewHome(); break;
+      case 'convo': html=C?viewConvo():viewHome(); break;
+    }
+  }catch(e){ html=`<div class="card">畫面發生錯誤：${esc(e.message)}</div>`; console.error(e); }
+  app.innerHTML=html; if(!inSession) nav.innerHTML=navHTML();
+  renderChip();
+  if (VIEW.name==='dict') bindDictSearch();
+}
+
+function nextLessons(w, n=2){ return weekLessons(w).filter(l=>!lessonDone(l.id)).slice(0,n); }
+function viewHome(){
+  const w=curWeek(), p=weekProgress(w), due=dueIds().length, t=today(), td=state.days[t]||{xp:0,q:0,l:0};
+  const nexts=nextLessons(w,2); const conv=weekLessons(w).find(l=>l.type==='convo');
+  const lv=level(), lx=levelXP(lv), nx=levelXP(lv+1);
+  const expected=Math.min(26, Math.floor((t-state.start)/7)+1);
+  const diff = w-expected;
+  const pace = state.xp===0 ? '從今天開始，一週一站' : diff>0?`比計畫超前 ${diff} 站`:diff===0?'進度剛好跟上計畫':`比計畫落後 ${-diff} 站，加油！`;
+  const daysLeft = EXAM_DATE - t;
+  const rows=[];
+  rows.push(`<button class="led-row ${due?'':'done'}" data-act="review"><span class="kind k-review">複習</span><span class="what">${due?`到期卡片 ${due} 張`:learnedIds().length?'今天的複習都完成了':'還沒有卡片'}<small>${learnedIds().length?'間隔重複・忘記前提醒你':'上完第一課後，學過的內容會出現在這裡'}</small></span><span class="go">${due?'乗車':'済'}</span></button>`);
+  nexts.forEach((l,i)=>rows.push(`<button class="led-row" data-lesson="${l.id}"><span class="kind ${l.type==='test'?'k-test':l.type==='convo'?'k-talk':'k-lesson'}">${i===0?'次':'次々'}</span><span class="what">${esc(l.title)}<small>${esc(lessonDesc(l))}</small></span><span class="go">乗車</span></button>`));
+  if (conv && !nexts.includes(conv)) rows.push(`<button class="led-row ${lessonDone(conv.id)?'done':''}" data-lesson="${conv.id}"><span class="kind k-talk">會話</span><span class="what">${esc(conv.convo.title)}<small>${esc(conv.convo.place)}</small></span><span class="go">${lessonDone(conv.id)?'済':'乗車'}</span></button>`);
+  if (!nexts.length) rows.push(`<button class="led-row" data-week="${Math.min(26,w+1)}"><span class="kind k-lesson">本站</span><span class="what">本站課程全部完成<small>前往路線圖看下一站</small></span><span class="go">→</span></button>`);
+  const goalPct=Math.min(100, Math.round(td.xp/state.settings.goal*100));
+  return `${topbar('',false)}<main class="stack">
+   ${ekimei(w, `<div class="sub"><span>第 ${w} 週・${esc(WEEK_TITLE[w])}</span><span class="num muted">${p.done}/${p.total}</span></div><div style="padding:0 14px 12px"><div class="bar"><i style="width:${p.total?p.done/p.total*100:0}%;--lc:${lc(w)}"></i></div></div>`)}
+   <section class="led" aria-label="今日的學習">
+     <div class="head"><span>本日の運行　TODAY</span><b>${fmtDay(t)}</b></div>${rows.join('')}
+   </section>
+   <div class="stats">
+     <div class="stat"><b class="num">${state.streak}</b><span>連續學習天數</span></div>
+     <div class="stat"><b class="num">${td.xp}<small style="font-size:13px;color:var(--muted)">/${state.settings.goal}</small></b><span>今日 XP</span><div class="bar" style="margin-top:4px"><i style="width:${goalPct}%"></i></div></div>
+     <div class="stat"><b class="num">${daysLeft>0?daysLeft:'—'}</b><span>距 2027/7 JLPT（天）</span></div>
+   </div>
+   <div class="card stack" style="gap:8px">
+     <div class="spread"><span><span class="levelname">${trainClass(lv)}</span>　<span class="muted small">Lv.${lv}</span></span><span class="num small muted">${state.xp} / ${nx} XP</span></div>
+     <div class="bar"><i style="width:${(state.xp-lx)/(nx-lx)*100}%;--lc:var(--ink)"></i></div>
+     <p class="small muted">${pace}。每天約 35 分鐘：先清空複習，再上 1〜2 堂新課。</p>
+   </div>
+   ${w<=4 && !state.xp ? `<div class="note" style="--lc:var(--kana)">第一次來嗎？從「次」那一列開始，先學平假名。每一課都是「看卡片 → 小測驗」，學過的內容會自動排進每天的複習。</div>`:''}
+  </main>`;
+}
+function viewMap(){
+  const cw=curWeek(); let out='', lastLine=null;
+  for (let w=1; w<=26; w++){
+    const ln=lineOf(w);
+    if (ln!==lastLine){ out+=`<div class="xfer" style="--lc:${lc(w)}"><i></i>${LINES[ln].name}${lastLine?'　乗換':''}</div>`; lastLine=ln; }
+    const passed=isPassed(w), unl=isUnlocked(w), p=weekProgress(w);
+    const cls = passed?'passed':w===cw?'current':unl?'':'locked';
+    out+=`<button class="stn ${cls}" style="--lc:${lc(w)}" data-week="${w}" ${unl?'':'aria-disabled="true"'}>
+      <span class="rail"><span class="dot"></span></span>
+      <span class="info"><span class="nm">${esc(STATIONS[w][0])}<small>第 ${w} 週</small></span><span class="tt">${esc(WEEK_TITLE[w])}</span></span>
+      <span class="meta">${passed?`<span class="ministamp">済</span>`:unl?`<span class="num">${p.done}/${p.total}</span>`:'🔒'}</span></button>`;
+  }
+  return `${topbar('路線圖',false)}<main class="stack"><p class="small muted">每一站＝一週。通過週測驗（${PASS*100}%）就能拿到車站印章、前往下一站。</p><div class="route">${out}</div></main>`;
+}
+function viewWeek(w){
+  if (!isUnlocked(w)) return `${topbar('',true)}<main class="stack">${ekimei(w)}<div class="card">這一站還沒解鎖。先通過第 ${w-1} 週的週測驗吧！<br><span class="small muted">（想自由瀏覽可以到「我的 → 設定」開啟全部解鎖）</span></div></main>`;
+  const L=weekLessons(w), st=state.weeks[w];
+  const counts=D.weeks[w];
+  const summary=[counts.kana.length&&`假名 ${counts.kana.length}`,counts.kanji.length&&`漢字 ${counts.kanji.length}`,counts.vocab.length&&`單字 ${counts.vocab.length}`,counts.grammar.length&&`文法 ${counts.grammar.length}`].filter(Boolean).join('・');
+  return `${topbar('',true)}<main class="stack" style="--lc:${lc(w)}">
+   ${ekimei(w, `<div class="sub"><span>${esc(WEEK_TITLE[w])}</span>${st?.passed?`<span class="tag" style="background:var(--stamp)">已過站 ${fmtDay(st.date)}</span>`:''}</div>`)}
+   ${summary?`<p class="small muted">本站內容：${summary}</p>`:''}
+   <div class="list">${L.map(l=>{ const d=lessonDone(l.id), b=state.lessons[l.id]?.best;
+     return `<button class="lesson ${d?'done':''}" data-lesson="${l.id}"><span class="ic">${lessonIcon(l)}</span><span style="min-width:0"><span class="t">${esc(l.title)}</span><br><span class="d">${esc(lessonDesc(l))}</span></span><span class="st num">${d? (l.type==='mock'?`${b} 分`:'完成') : b?`最高 ${Math.round(b*100)}%`:''}</span></button>`; }).join('')}</div>
+   ${w===26?`<div class="note">終點條件：N4 模擬考達到合格標準（總分 90／180，且每一部分都超過最低分）。</div>`:''}
+  </main>`;
+}
+function viewReview(){
+  const due=dueIds(); const ids=learnedIds(); const t=today();
+  const tomorrow=ids.filter(id=>state.srs[id][1]===t+1).length;
+  const boxes=[0,0,0,0]; ids.forEach(id=>{ const b=state.srs[id][0]; boxes[b<=1?0:b<=3?1:b<=5?2:3]++; });
+  const types=['kana','vocab','kanji','grammar'].map(ty=>[ty, ids.filter(id=>D.items[id].type===ty).length, mastered(ty)]);
+  const name={kana:'假名',vocab:'單字',kanji:'漢字',grammar:'文法'};
+  return `${topbar('複習',false)}<main class="stack">
+   <div class="card stack" style="align-items:center;text-align:center">
+     <div class="result-big num">${due.length}</div><div class="muted">張卡片今天到期</div>
+     <button class="btn primary block" data-act="review" ${due.length?'':'disabled'}>${due.length?`開始複習${due.length>state.settings.reviewMax?`（先做 ${state.settings.reviewMax} 張）`:''}`:'今天都複習完了'}</button>
+     <p class="small muted">明天到期：${tomorrow} 張。答對的卡片間隔會拉長（1→2→4→7→15→30 天），答錯就從頭開始。</p>
+   </div>
+   <div class="section-title">記憶程度</div>
+   <div class="card stack" style="gap:8px">
+     ${[['剛學・常錯',boxes[0],'var(--bad)'],['記憶中',boxes[1],'var(--n4)'],['快記住了',boxes[2],'var(--kana)'],['已熟練',boxes[3],'var(--ok)']].map(([n,c,col])=>`<div class="spread small"><span>${n}</span><span class="num">${c}</span></div><div class="bar"><i style="width:${ids.length?c/ids.length*100:0}%;--lc:${col}"></i></div>`).join('')}
+   </div>
+   <div class="stats" style="grid-template-columns:repeat(4,1fr)">${types.map(([ty,n,m])=>`<div class="stat"><b class="num">${n}</b><span>${name[ty]}・熟練 ${m}</span></div>`).join('')}</div>
+   <button class="btn block" data-act="weak" ${ids.length?'':'disabled'}>弱點特訓（最常錯的 30 題）</button>
+  </main>`;
+}
+function viewTalk(){
+  const cw=curWeek();
+  return `${topbar('情境會話',false)}<main class="stack"><p class="small muted">每一站都有一個在日本會遇到的場景。選出正確的回話，聽懂對方說什麼。</p>
+   <div class="list">${CONVO.map(sc=>{ const unl=isUnlocked(sc.w); const best=state.convo[sc.id];
+    return `<button class="lesson ${best!==undefined?'done':''}" style="--lc:${lc(sc.w)}" data-convo="${sc.id}" ${unl?'':'disabled'}><span class="ic">${sc.w}</span><span style="min-width:0"><span class="t jp">${esc(sc.title)}</span><br><span class="d">${esc(sc.place)}・${esc(sc.goal)}</span></span><span class="st">${unl? best!==undefined?`${Math.round(best*100)}%`:'' :'🔒'}</span></button>`; }).join('')}</div></main>`;
+}
+function viewMe(){
+  const lv=level(); const t=today();
+  const heat=[]; for(let d=t-55; d<=t; d++){ const x=state.days[d]?.xp||0; heat.push(`<i class="${x>=state.settings.goal?'l3':x>=60?'l2':x>0?'l1':''}" title="${fmtDay(d)}：${x} XP"></i>`); }
+  const stamps=[]; for(let w=1; w<=26; w++){ const st=state.weeks[w]; stamps.push(st?.passed?`<div class="stamp" title="${esc(STATIONS[w][0])}"><span class="w">第${w}站</span><span class="n">${esc(STATIONS[w][0])}</span><span class="dt num">${fmtDayFull(st.date)}</span></div>`:`<div class="stamp empty"><span class="w">第${w}站</span><span class="n" style="font-size:13px">${esc(STATIONS[w][0])}</span></div>`); }
+  const totalQ=Object.values(state.days).reduce((a,d)=>a+(d.q||0),0);
+  const ex=state.exams.slice(-6).reverse();
+  return `${topbar('我的',false)}<main class="stack">
+   <div class="card stack" style="gap:6px"><div class="spread"><span class="levelname" style="font-size:20px">${trainClass(lv)}</span><span class="num muted">Lv.${lv}・${state.xp} XP</span></div>
+   <div class="stats" style="margin-top:6px"><div class="stat"><b class="num">${state.streak}</b><span>連續天數（最高 ${state.best}）</span></div><div class="stat"><b class="num">${mastered('vocab')+mastered('kanji')}</b><span>熟練單字＋漢字</span></div><div class="stat"><b class="num">${totalQ}</b><span>總答題數</span></div></div></div>
+   <div class="section-title">最近 8 週</div><div class="card"><div class="heat">${heat.join('')}</div><p class="small muted" style="margin-top:8px">深綠色＝達成每日目標 ${state.settings.goal} XP。</p></div>
+   <div class="section-title">車站印章</div><div class="stamps">${stamps.join('')}</div>
+   ${ex.length?`<div class="section-title">模擬考紀錄</div><div class="card stack" style="gap:6px">${ex.map(e=>`<div class="spread small"><span>${e.level}・${fmtDayFull(e.day)}</span><span class="num">${e.total}/180　<b style="color:${e.pass?'var(--ok)':'var(--bad)'}">${e.pass?'合格':'不合格'}</b></span></div>`).join('')}</div>`:''}
+   <div class="row"><button class="btn" style="flex:1" data-go="dict">單字・漢字・文法一覽</button><button class="btn" style="flex:1" data-go="settings">設定</button></div>
+  </main>`;
+}
+let dictTab='vocab', dictQ='';
+function viewDict(){
+  const tabs=[['vocab','單字'],['kanji','漢字'],['grammar','文法'],['kana','假名']];
+  return `${topbar('一覽',true)}<main class="stack"><div class="seg">${tabs.map(([k,n])=>`<button class="${dictTab===k?'on':''}" data-dtab="${k}">${n} ${POOL[k].length}</button>`).join('')}</div>
+   <input type="search" id="dictq" placeholder="搜尋日文、讀音或中文" value="${esc(dictQ)}" aria-label="搜尋"><div class="list" id="dictlist">${dictList()}</div></main>`;
+}
+function dictList(){
+  const q=dictQ.trim().toLowerCase();
+  let arr=POOL[dictTab];
+  if (q) arr=arr.filter(x=>[x.jp,x.rd,x.zh,x.t,x.m,x.ro,x.ex,x.exr,x.on,x.kun].filter(Boolean).some(s=>String(s).toLowerCase().includes(q)));
+  const st=id=>{ const s=state.srs[id]; return !s?'<span class="lvl">未學</span>':s[0]>=5?'<span class="lvl m">熟練</span>':'<span class="lvl">學習中</span>'; };
+  return arr.slice(0,200).map(x=>{
+    if (x.type==='grammar') return `<div class="dict-item"><div style="min-width:0"><div class="a">${esc(x.t)}</div><div class="b">${esc(x.m)}</div><div class="b jp">${esc(x.ex)}</div></div><div class="row" style="flex-direction:column;align-items:flex-end;gap:4px">${st(x.id)}<span class="lvl">第${x.w}週</span></div></div>`;
+    if (x.type==='kanji') return `<div class="dict-item"><div style="min-width:0"><div class="a">${esc(x.jp)}　<span class="b">${esc(x.zh)}</span></div><div class="b jp">音 ${esc(x.on)}／訓 ${esc(x.kun)}　${esc(x.ex)}（${esc(x.exr)}）</div></div><div class="row" style="gap:6px">${st(x.id)}<button class="iconbtn" data-speak="${esc(x.exr)}" aria-label="發音">${ICON.speak}</button></div></div>`;
+    if (x.type==='kana') return `<div class="dict-item"><div><span class="a">${esc(x.jp)}</span>　<span class="b">${esc(x.ro)}</span></div><div class="row" style="gap:6px">${st(x.id)}<button class="iconbtn" data-speak="${esc(x.jp)}" aria-label="發音">${ICON.speak}</button></div></div>`;
+    return `<div class="dict-item"><div style="min-width:0"><div class="a">${esc(x.jp)}${hasKanji(x.jp)?` <span class="b jp" style="font-weight:400">${esc(x.rd)}</span>`:''}</div><div class="b">${esc(x.zh)}　<span class="lvl">第${x.w}週</span></div></div><div class="row" style="gap:6px">${st(x.id)}<button class="iconbtn" data-speak="${esc(x.rd)}" aria-label="發音">${ICON.speak}</button></div></div>`;
+  }).join('') + (arr.length>200?`<p class="small muted">還有 ${arr.length-200} 筆，請輸入關鍵字縮小範圍。</p>`:'') + (!arr.length?'<p class="muted">找不到符合的項目。</p>':'');
+}
+function bindDictSearch(){ const el=$('#dictq'); if(!el) return; el.addEventListener('input',()=>{ dictQ=el.value; $('#dictlist').innerHTML=dictList(); }); }
+let confirmReset=false;
+function viewSettings(){
+  const s=state.settings;
+  const seg=(key,opts)=>`<div class="seg">${opts.map(([v,n])=>`<button class="${String(s[key])===String(v)?'on':''}" data-set="${key}" data-val="${v}">${n}</button>`).join('')}</div>`;
+  return `${topbar('設定',true)}<main class="card">
+   <div class="setting"><b>羅馬拼音</b><span class="small muted">「自動」：第 1〜4 週顯示，之後隱藏（可點「顯示拼音」）。</span>${seg('romaji',[['auto','自動'],['always','一直顯示'],['never','不顯示']])}</div>
+   <div class="setting"><b>語音速度</b><span class="small muted">${canSpeak?(jaVoice?`使用語音：${esc(jaVoice.name)}`:'這個裝置找不到日語語音，聽力題會改成文字。可以在系統設定安裝日語語音。'):'這個瀏覽器不支援語音。'}</span>${seg('rate',[[0.7,'慢'],[0.9,'標準'],[1.1,'快']])}<button class="btn" data-speak="こんにちは。日本語を勉強しましょう。">試聽</button></div>
+   <div class="setting"><b>會話預設顯示中文翻譯</b>${seg('zh',[[true,'顯示'],[false,'隱藏']])}</div>
+   <div class="setting"><b>會話自動播放語音</b>${seg('autoplay',[[true,'開'],[false,'關']])}</div>
+   <div class="setting"><b>每日目標</b>${seg('goal',[[100,'100 XP・約 25 分'],[150,'150 XP・約 35 分'],[220,'220 XP・約 50 分']])}</div>
+   <div class="setting"><b>每次複習上限</b>${seg('reviewMax',[[30,'30 張'],[60,'60 張'],[120,'120 張']])}</div>
+   <div class="setting"><b>全部站點解鎖</b><span class="small muted">開啟後不需通過週測驗也能進入任何一週（適合已經有基礎、想跳級的人）。</span>${seg('unlockAll',[[false,'關'],[true,'開']])}</div>
+   <div class="setting"><b>計畫開始日</b><span class="small muted">用來計算「超前／落後」的進度。</span><input type="date" id="startdate" value="${new Date(state.start*864e5).toISOString().slice(0,10)}"></div>
+   <div class="setting"><b>重設進度</b>${confirmReset?`<div class="confirm stack" style="gap:8px"><span>確定要清除所有學習紀錄嗎？雲端的進度也會一起清除，無法復原。</span><div class="row"><button class="btn danger" data-act="reset-yes">確定清除</button><button class="btn" data-act="reset-no">取消</button></div></div>`:`<button class="btn danger" data-act="reset">清除所有學習紀錄</button>`}</div>
+   <div class="setting"><span class="small muted">進度同步：${cloud.ref?'登入 Claude 帳號後，手機和電腦會自動同步。':'目前只儲存在這個瀏覽器（登入 Claude 開啟這個頁面即可雲端同步）。'}</span></div>
+  </main>`;
+}
+
+// ---- 學習卡片與題目 ----
+function learnCard(it){
+  const sp = it.type==='kana'?it.jp : it.type==='vocab'?it.rd : it.type==='kanji'?it.exr : it.ex;
+  if (it.type==='kana') return `<div class="learn"><div class="head"><div class="glyph kana jp">${esc(it.jp)}</div><div class="meaning">${esc(it.ro)}</div>${speakBtn(it.jp)}</div></div>`;
+  if (it.type==='vocab'){ const kj=hasKanji(it.jp);
+    return `<div class="learn"><div class="head"><div class="glyph jp" style="${it.jp.length>8?'font-size:clamp(24px,7vw,34px)':''}">${esc(it.jp)}</div>${kj?`<div class="rd">${esc(it.rd)}</div>`:''}${kanaOnly(it.rd)?(showRomaji()?`<div class="ro muted">${esc(toRomaji(it.rd))}</div>`:roHtml(it.rd)):''}<div class="meaning">${esc(it.zh)}</div>${speakBtn(sp)}</div></div>`; }
+  if (it.type==='kanji') return `<div class="learn"><div class="head"><div class="glyph kanji jp">${esc(it.jp)}</div><div class="meaning">${esc(it.zh)}</div></div>
+    <dl class="kv"><dt>音讀</dt><dd>${esc(it.on)}</dd><dt>訓讀</dt><dd>${esc(it.kun)}</dd></dl>
+    <div class="example"><div style="flex:1"><div class="s">${esc(it.ex)}　<span class="muted" style="font-size:14px">${esc(it.exr)}</span></div><div class="z">${esc(it.exz)}</div></div>${speakBtn(sp)}</div></div>`;
+  return `<div class="learn"><div class="head"><div class="glyph jp" style="font-size:clamp(22px,6.5vw,30px)">${esc(it.t)}</div><div style="font-size:16px">${esc(it.m)}</div></div>
+    <dl class="kv"><dt>接續</dt><dd>${esc(it.s)}</dd></dl>
+    <div class="example"><div style="flex:1"><div class="s">${esc(it.ex)}</div><div class="z">${esc(it.zh)}</div></div>${speakBtn(sp)}</div></div>`;
+}
+function viewSession(){
+  const s=S;
+  if (s.phase==='learn'){
+    const it=s.learn[s.li];
+    const note = s.li===0 && s.lesson?.note ? `<div class="note" style="--lc:${lc(s.lesson.w)}">${esc(s.lesson.note)}</div>` : '';
+    return `${sessionTop(s.li+1, s.learn.length, '學習')}<main class="qwrap" style="--lc:${s.lesson?lc(s.lesson.w):'var(--ink)'}">${note}${learnCard(it)}
+     <div class="row"><button class="btn" data-act="lprev" ${s.li?'':'disabled'} style="flex:1">上一張</button><button class="btn line" data-act="lnext" style="flex:2">${s.li<s.learn.length-1?'下一張':'開始小測驗'}</button></div>
+     <button class="btn ghost small" data-act="lskip">跳過，直接測驗</button></main>`;
+  }
+  if (s.phase==='result') return viewResult();
+  const q=s.queue[s.qi];
+  const mock=s.kind==='mock';
+  const pas = q.passage ? `<div class="card" style="text-align:left"><div class="small muted" style="margin-bottom:6px">${esc(q.passage.title)}</div><div class="jp" style="white-space:pre-line;font-size:16.5px;line-height:1.85">${esc(q.passage.text)}</div></div>` : '';
+  const picked=s.picked!==null;
+  const okSet = q.okIdx || [q.ans];
+  const opts=q.opts.map((o,i)=>{
+    let cls='opt'+(o.jp?' jp':''); if(picked){ if(okSet.includes(i)) cls+=' right'; else if(i===s.picked) cls+=' wrong'; }
+    const ro = o.jp && showRomaji() && kanaOnly(o.t) && o.t.length<=14 ? `<small>${esc(toRomaji(o.t))}</small>` : '';
+    return `<button class="${cls}" data-opt="${i}" ${picked?'disabled':''}><span class="k">${i+1}</span><span class="tx">${esc(o.t)}${ro}</span></button>`;
+  }).join('');
+  const longOpts = q.opts.some(o=>o.t.length>10);
+  const ok = picked && okSet.includes(s.picked);
+  const fb = picked ? `<div class="feedback ${ok?'ok':'bad'}"><b>${ok?'答對了！':'答錯了'}</b>　${q.explain||''}</div>
+      <div class="row">${q.speak&&!q.listen?`<button class="btn" data-speak="${esc(q.speak)}">${ICON.speak}再聽一次</button>`:''}<button class="btn primary" style="flex:1" data-act="next">${s.qi<s.queue.length-1?'下一題':'看結果'}</button></div>` : '';
+  const sec = q.section ? `<span class="tag" style="--lc:var(--exam)">${esc(q.section)}</span>` : '';
+  return `${sessionTop(s.qi+1, s.queue.length, mock?timerHTML():'')}<main class="qwrap">
+    ${pas}<div class="prompt">${sec?`<div>${sec}</div>`:''}<div class="ask">${q.ask}</div>${q.big}</div>
+    <div class="opts ${longOpts?'one':''}">${opts}</div>${fb}</main>`;
+}
+function timerHTML(){ if(!S?.timeLimit) return ''; const left=S.timeLimit-Math.floor((Date.now()-S.startedAt)/1000); const m=Math.floor(Math.abs(left)/60), sec=Math.abs(left)%60; return `<span class="timer num" id="timer" style="color:${left<0?'var(--bad)':'inherit'}">${left<0?'-':''}${m}:${String(sec).padStart(2,'0')}</span>`; }
+function sessionTop(i, n, right){
+  return `<header class="topbar"><button class="iconbtn" data-act="quit" aria-label="離開">${ICON.close}</button>
+   <div class="progress grow"><div class="bar"><i style="width:${(i-1)/n*100}%;--lc:var(--ink)"></i></div><span class="small num muted">${i}/${n}</span></div>${right||''}</header>
+   ${quitConfirm?`<div class="confirm stack" style="gap:8px;margin-bottom:12px"><span>要離開嗎？這次的進度不會記錄${S?.kind==='review'?'（已答的複習會保留）':''}。</span><div class="row"><button class="btn danger" data-act="quit-yes">離開</button><button class="btn" data-act="quit-no">繼續作答</button></div></div>`:''}`;
+}
+let quitConfirm=false;
+function viewResult(){
+  const s=S, acc=s.answered?s.correct/s.answered:0, L=s.lesson;
+  let head='';
+  if (s.kind==='mock'){
+    const sc=s.score;
+    head=`<div class="card stack" style="text-align:center;align-items:center"><div class="small muted">${esc(s.title)}・推估分數</div>
+     <div class="result-big num">${sc.total}<span style="font-size:20px" class="muted">/180</span></div>
+     <b style="font-size:20px;color:${sc.pass?'var(--ok)':'var(--bad)'}">${sc.pass?'合格水準！':'還差一點'}</b>
+     <div class="scoreline num" style="width:100%;text-align:left"><span>言語知識（文字・語彙・文法）・讀解</span><b>${sc.A}/120（最低 38）</b><span>聽解</span><b>${sc.B}/60（最低 19）</b><span>合格標準</span><b>${sc.need}/180</b></div>
+     <div class="scoreline num small muted" style="width:100%;text-align:left">${sc.secs.map(([n,c,t])=>`<span>${n}</span><span>${c}/${t}</span>`).join('')}</div>
+     <p class="small muted">分數依答對比例換算，只供參考。實際 JLPT 採用等化計分。</p></div>`;
+  } else {
+    const passMsg = s.kind==='test' ? (acc>=PASS?'恭喜過站！':`需要 ${PASS*100}% 才能過站，再挑戰一次吧`) : '完成！';
+    head=`<div class="card stack" style="text-align:center;align-items:center"><div class="small muted">${esc(s.title)}</div><div class="result-big num">${Math.round(acc*100)}%</div><b style="font-size:18px">${passMsg}</b><div class="muted small num">答對 ${s.correct}/${s.answered}・獲得 ${s.xp} XP</div></div>`;
+  }
+  const stamp = s.stamp ? `<div class="stamp big pop" style="margin-top:4px"><span class="w">第${L.w}站</span><span class="n">${esc(STATIONS[L.w][0])}</span><span class="dt num">${fmtDayFull(today())}</span></div><p style="text-align:center"><b>獲得「${esc(STATIONS[L.w][0])}」車站印章！</b>${L.w<26?`下一站：${esc(STATIONS[L.w+1][0])}`:'恭喜抵達終點！'}</p>` : '';
+  const wr = s.wrong.slice(0,30).map(q=>`<div class="feedback bad" style="color:var(--ink)">${q.passage?`<div class="small muted">${esc(q.passage.title)}</div>`:''}${q.explain||''}</div>`).join('');
+  const nxt = L ? nextLessons(L.w,1)[0] : null;
+  return `<header class="topbar"><div class="grow"><b>結果</b></div></header><main class="stack">${head}${stamp}
+   ${wr?`<div class="section-title">要再看一次的題目</div>${wr}`:''}
+   <div class="row">${L&&s.kind!=='mock'?`<button class="btn" style="flex:1" data-act="again">再來一次</button>`:''}${s.kind==='mock'?`<button class="btn" style="flex:1" data-lesson="${L.id}">再考一次</button>`:''}
+   ${nxt?`<button class="btn line" style="flex:2;--lc:${lc(L.w)}" data-lesson="${nxt.id}">下一課：${esc(nxt.title)}</button>`:`<button class="btn primary" style="flex:2" data-act="done">回到首頁</button>`}</div>
+   ${nxt?`<button class="btn ghost" data-act="done">回到首頁</button>`:''}</main>`;
+}
+function viewConvo(){
+  const c=C, sc=c.sc;
+  const bubbles=c.shown.map(b=>`<div class="bub ${b.me?'me':'npc'}"><div class="who">${esc(b.who)}</div><div class="jp">${esc(b.jp)}</div>${showRomaji()&&kanaOnly(b.jp)?`<div class="ro">${esc(toRomaji(b.jp))}</div>`:''}${c.zh?`<div class="zh">${esc(b.zh)}</div>`:''}${!b.me?`<button class="iconbtn say" data-speak="${esc(b.jp)}" aria-label="播放">${ICON.speak}</button>`:''}</div>`).join('');
+  let panel='';
+  if (c.pending){
+    const ln=c.pending, okSet=ln.ok||[0], picked=c.picked!==null;
+    const opts=c.choiceOrder.map((k,idx)=>{ let cls='opt'+(ln.q?'':' jp'); if(picked){ if(okSet.includes(k)) cls+=' right'; else if(k===c.picked) cls+=' wrong'; }
+      const ro = !ln.q && showRomaji() && kanaOnly(ln.c[k][0]) ? `<small>${esc(toRomaji(ln.c[k][0]))}</small>` : '';
+      return `<button class="${cls}" data-cpick="${k}" ${picked?'disabled':''}><span class="k">${idx+1}</span><span class="tx">${esc(ln.c[k][0])}${ro}${picked&&!ln.q&&ln.c[k][1]?`<small>${esc(ln.c[k][1])}</small>`:''}</span></button>`; }).join('');
+    const ok=picked && okSet.includes(c.picked);
+    panel=`<div class="card stack" style="gap:10px"><div class="small muted">${ln.q?'聽懂了嗎？':'輪到你說話了，選擇最適當的回應：'}</div>${ln.q?`<b>${esc(ln.q)}</b>`:''}<div class="opts one">${opts}</div>
+      ${picked?`<div class="feedback ${ok?'ok':'bad'}"><b>${ok?'很好！':'再想想'}</b>　${esc(ln.fb||'')}</div><button class="btn line" data-act="cnext">繼續</button>`:''}</div>`;
+  } else if (c.done){
+    const acc=c.total?c.first/c.total:1;
+    panel=`<div class="card stack" style="text-align:center;align-items:center"><div class="result-big num">${Math.round(acc*100)}%</div><b>會話完成！</b><span class="small muted">一次就答對 ${c.first}/${c.total}</span>
+      <div class="row" style="width:100%"><button class="btn" style="flex:1" data-act="creplay">再練一次</button><button class="btn primary" style="flex:1" data-act="done">回到首頁</button></div></div>`;
+  } else {
+    panel=`<button class="btn line block" data-act="cnext">繼續</button>`;
+  }
+  return `<header class="topbar"><button class="iconbtn" data-act="cquit" aria-label="離開">${ICON.close}</button><div class="grow"></div><div class="seg" style="flex:none"><button class="${c.zh?'on':''}" data-act="czh">中文 ${c.zh?'開':'關'}</button></div></header>
+   <main class="stack" style="--lc:${lc(sc.w)}"><div class="scene-head"><div class="badge">${esc(sc.place.slice(0,4))}</div><div><h2 class="jp">${esc(sc.title)}</h2><div class="small muted">${esc(sc.goal)}</div></div></div>
+   <div class="chat">${bubbles}<span class="chat-end"></span></div>${panel}</main>`;
+}
+
+// ================= 事件 =================
+document.addEventListener('click', e=>{
+  const t=e.target.closest('button'); if(!t) return;
+  const d=t.dataset;
+  if (d.speak!==undefined && !d.opt){ speak(d.speak); return; }
+  if (d.reveal){ t.outerHTML=`<div class="ro">${esc(d.reveal)}</div>`; return; }
+  if (d.tab){ tab(d.tab); return; }
+  if (d.go){ go(d.go); return; }
+  if (d.week){ const w=+d.week; if(isUnlocked(w)) go('week',{w}); else toast(`先通過第 ${w-1} 週的週測驗才能前往`); return; }
+  if (d.lesson){ const l=LESSON_BY_ID[d.lesson]; if(l && !isUnlocked(l.w)){ toast('這一站還沒解鎖'); return; } if(S||C){ S=null; C=null; VIEW=STACK.pop()||{name:'home'}; } startLesson(d.lesson); maybeAutoplay(); return; }
+  if (d.convo){ const sc=CONVO.find(x=>x.id===d.convo); startConvo(sc, LESSON_BY_ID[`${sc.w}-c`]); return; }
+  if (d.opt!==undefined){ answer(+d.opt); return; }
+  if (d.cpick!==undefined){ convoPick(+d.cpick); return; }
+  if (d.dtab){ dictTab=d.dtab; render(); return; }
+  if (d.set){ let v=d.val; if(v==='true') v=true; else if(v==='false') v=false; else if(!isNaN(+v)) v=+v; state.settings[d.set]=v; save(); render(); return; }
+  switch(d.act){
+    case 'back': back(); break;
+    case 'review': startReview(); maybeAutoplay(); break;
+    case 'weak': startPractice('weak', null); break;
+    case 'lnext': if(S.li<S.learn.length-1){ S.li++; render(); } else { S.phase='quiz'; render(); maybeAutoplay(); } window.scrollTo(0,0); break;
+    case 'lprev': if(S.li>0){ S.li--; render(); } break;
+    case 'lskip': S.phase='quiz'; render(); maybeAutoplay(); break;
+    case 'next': next(); window.scrollTo(0,0); break;
+    case 'quit': quitConfirm=true; render(); break;
+    case 'quit-no': quitConfirm=false; render(); break;
+    case 'quit-yes': quitConfirm=false; if(S && S.kind==='review') save(); back(); break;
+    case 'again': { const l=S.lesson; S=null; VIEW=STACK.pop()||{name:'home'}; startLesson(l.id); maybeAutoplay(); break; }
+    case 'done': S=null; C=null; tab('home'); break;
+    case 'cnext': convoContinue(); break;
+    case 'czh': C.zh=!C.zh; render(); break;
+    case 'cquit': C=null; back(); break;
+    case 'creplay': { const sc=C.sc, l=C.l; C=null; VIEW=STACK.pop()||{name:'home'}; startConvo(sc,l); break; }
+    case 'reset': confirmReset=true; render(); break;
+    case 'reset-no': confirmReset=false; render(); break;
+    case 'reset-yes': confirmReset=false; state=freshState(); state.updated=Date.now(); saveLocal(); pushCloud(); toast('已清除所有學習紀錄'); tab('home'); break;
+  }
+});
+document.addEventListener('change', e=>{ if(e.target.id==='startdate' && e.target.value){ const [y,m,dd]=e.target.value.split('-').map(Number); state.start=Math.floor(Date.UTC(y,m-1,dd)/864e5); save(); toast('已更新計畫開始日'); } });
+document.addEventListener('keydown', e=>{
+  if (e.target.tagName==='INPUT') return;
+  if (S && S.phase==='quiz'){ const n=+e.key; if(n>=1 && n<=S.queue[S.qi].opts.length && S.picked===null){ answer(n-1); e.preventDefault(); } else if((e.key==='Enter'||e.key===' ') && S.picked!==null){ next(); e.preventDefault(); } }
+  else if (S && S.phase==='learn' && (e.key==='ArrowRight'||e.key==='Enter')){ document.querySelector('[data-act="lnext"]')?.click(); e.preventDefault(); }
+  else if (C){ const n=+e.key; if(C.pending && C.picked===null && n>=1 && n<=C.choiceOrder.length){ convoPick(C.choiceOrder[n-1]); e.preventDefault(); } else if((e.key==='Enter') ){ document.querySelector('[data-act="cnext"]')?.click(); e.preventDefault(); } }
+});
+setInterval(()=>{ const el=$('#timer'); if(el && S?.timeLimit) el.outerHTML=timerHTML(); }, 1000);
+window.addEventListener('pagehide', ()=>{ if(cloud.ref && state.updated) pushCloud(); });
+
+// 讓開發者在主控台檢查資料
+window.__JUKAN__ = {D, LESSON_BY_ID, LISTEN, toRomaji, weekLessons, makeQ, state:()=>state};
+
+render();
+initCloud();
+})();
+
+</script>
+
+</body></html>
